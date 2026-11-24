@@ -1,0 +1,2890 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maarifin Kalbinde Oyun — Özdenetim (Nefis Terbiyesi)</title>
+    <style>
+        /* =========================================================
+           MAARİFİN KALBİNDE OYUN — MİMARİ TASARIM YASALARI
+           Konu: Ahlak / Özdenetim (Nefis Terbiyesi)
+           Renk Paleti: Lacivert (#050D1E, #0B1D3E), Gök Mavisi (#38BDF8), Parlak Beyaz (#FFFFFF)
+           Arka Sıra Kuralı: Devasa okunabilirlik, clamp() / vw / vh, Sıfır Taşma
+           ========================================================= */
+        :root {
+            --bg-deep: #050D1E;
+            --bg-navy: #0B1D3E;
+            --bg-card: #112A56;
+            --bg-card-hover: #193B75;
+            --sky-bright: #38BDF8;
+            --sky-glow: #0EA5E9;
+            --sky-soft: #BAE6FD;
+            --white-pure: #FFFFFF;
+            --text-muted: #CBD5E1;
+            --accent-gold: #FACC15;
+            --danger-red: #F43F5E;
+            --danger-bg: #3B0A18;
+            --warning-amber: #F59E0B;
+            --warning-bg: #3B2106;
+            --success-emerald: #10B981;
+            --success-bg: #052E22;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-deep);
+            background-image:
+                radial-gradient(circle at 15% 15%, #112A56 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, #0C2348 0%, transparent 45%);
+            color: var(--white-pure);
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ÜST BİLGİ ÇUBUĞU (HEADER) — Her ekranda görünür */
+        header.top-bar {
+            width: 100%;
+            height: 9vh;
+            min-height: 54px;
+            background-color: var(--bg-navy);
+            border-bottom: 3px solid var(--sky-bright);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.2vw;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.65);
+            flex-shrink: 0;
+            z-index: 20;
+            gap: 1vw;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+            min-width: 0;
+        }
+
+        .brand-badge {
+            background: var(--sky-bright);
+            color: var(--bg-deep);
+            font-weight: 900;
+            font-size: clamp(0.85rem, 1.25vw, 1.45rem);
+            padding: 0.45vh 0.9vw;
+            border-radius: 0.5vw;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+        }
+
+        .brand-title {
+            font-size: clamp(1.15rem, 1.8vw, 2.1rem);
+            font-weight: 900;
+            color: var(--white-pure);
+            letter-spacing: 0.02em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+            white-space: nowrap;
+        }
+
+        .brand-subtitle {
+            font-size: clamp(0.9rem, 1.18vw, 1.4rem);
+            color: var(--sky-soft);
+            font-weight: 700;
+            border-left: 2px solid var(--sky-bright);
+            padding-left: 0.9vw;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ÜST SAĞ GÖSTERGELER */
+        .hud-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.9vw;
+            flex-shrink: 0;
+        }
+
+        .stage-pill {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-gold);
+            border-radius: 0.7vw;
+            padding: 0.5vh 1vw;
+            font-size: clamp(0.95rem, 1.25vw, 1.45rem);
+            font-weight: 900;
+            color: var(--accent-gold);
+            white-space: nowrap;
+            display: none;
+        }
+
+        .meter-pill {
+            background: var(--bg-deep);
+            border: 2px solid var(--sky-bright);
+            border-radius: 0.7vw;
+            padding: 0.5vh 1vw;
+            display: flex;
+            align-items: center;
+            gap: 0.7vw;
+        }
+
+        .meter-label {
+            font-size: clamp(0.9rem, 1.18vw, 1.35rem);
+            font-weight: 800;
+            color: var(--sky-soft);
+            white-space: nowrap;
+        }
+
+        .meter-bar-wrap {
+            width: 8.5vw;
+            height: 2.1vh;
+            background: #1E293B;
+            border-radius: 0.4vw;
+            overflow: hidden;
+            border: 1px solid #475569;
+        }
+
+        .meter-bar-fill {
+            height: 100%;
+            width: 50%;
+            background: var(--sky-bright);
+            transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
+        }
+
+        .meter-value {
+            font-size: clamp(0.95rem, 1.28vw, 1.5rem);
+            font-weight: 900;
+            color: var(--white-pure);
+            min-width: 3.2vw;
+            text-align: right;
+        }
+
+        .btn-icon {
+            background: var(--bg-card);
+            color: var(--white-pure);
+            border: 2px solid var(--sky-bright);
+            border-radius: 0.6vw;
+            padding: 0.65vh 1vw;
+            font-size: clamp(0.9rem, 1.18vw, 1.35rem);
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.45vw;
+            white-space: nowrap;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-icon:active {
+            transform: translateY(0);
+        }
+
+        /* ANA SAHNE ALANI */
+        main.stage {
+            flex: 1;
+            width: 100%;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.4vh 2.2vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* =========================================================
+           1. EKRAN: AÇILIŞ EKRANI (ANA EKRAN)
+           ========================================================= */
+        .intro-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+            height: 100%;
+            width: 100%;
+            max-width: 94vw;
+            margin: 0 auto;
+            text-align: center;
+            gap: 1.2vh;
+        }
+
+        .code-tag {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+            font-size: clamp(1rem, 1.4vw, 1.65rem);
+            font-weight: 900;
+            padding: 0.65vh 1.8vw;
+            border-radius: 2vw;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-title {
+            font-size: clamp(2.1rem, 4vw, 4.6rem);
+            font-weight: 900;
+            color: var(--white-pure);
+            line-height: 1.12;
+            letter-spacing: -0.01em;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+        }
+
+        .hero-title span {
+            color: var(--sky-bright);
+        }
+
+        .hero-desc {
+            font-size: clamp(1.15rem, 1.7vw, 2rem);
+            color: var(--sky-soft);
+            max-width: 82vw;
+            line-height: 1.38;
+            font-weight: 600;
+        }
+
+        .pillars-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.4vw;
+            width: 100%;
+        }
+
+        .pillar-card {
+            flex: 1 1 20vw;
+            max-width: 22.5vw;
+            background: var(--bg-navy);
+            border: 2px solid var(--sky-bright);
+            border-radius: 1vw;
+            padding: 1.8vh 1.3vw;
+            text-align: left;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 0.7vh;
+        }
+
+        .pillar-card h3 {
+            font-size: clamp(1.1rem, 1.48vw, 1.75rem);
+            color: var(--accent-gold);
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        .pillar-card p {
+            font-size: clamp(0.95rem, 1.22vw, 1.42rem);
+            color: var(--white-pure);
+            line-height: 1.35;
+            font-weight: 600;
+        }
+
+        .cta-start-btn {
+            background: var(--sky-bright);
+            color: var(--bg-deep);
+            border: 3px solid var(--white-pure);
+            border-radius: 1.2vw;
+            padding: 2vh 4vw;
+            font-size: clamp(1.4rem, 2.15vw, 2.5rem);
+            font-weight: 900;
+            cursor: pointer;
+            letter-spacing: 0.03em;
+            box-shadow: 0 8px 24px rgba(56, 189, 248, 0.45);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 1vw;
+        }
+
+        .cta-start-btn:hover {
+            background: var(--white-pure);
+            color: var(--bg-deep);
+            transform: scale(1.03);
+        }
+
+        .cta-start-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* =========================================================
+           2. EKRAN: SENARYO VE KARAR MEKANİZMASI EKRANI
+           ========================================================= */
+        .game-columns {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 1.8vw;
+            align-items: stretch;
+            overflow: hidden;
+        }
+
+        /* SOL SÜTUN: SENARYO VE OLAY SİMÜLASYONU */
+        .scenario-column {
+            flex: 0 0 44%;
+            background: var(--bg-navy);
+            border: 2px solid var(--sky-bright);
+            border-radius: 1.1vw;
+            padding: 1.6vh 1.4vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1vh;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .scenario-badge-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8vw;
+            border-bottom: 2px solid #1E3A8A;
+            padding-bottom: 0.9vh;
+            flex-shrink: 0;
+        }
+
+        .scenario-tag {
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+            font-weight: 900;
+            font-size: clamp(0.9rem, 1.2vw, 1.4rem);
+            padding: 0.4vh 0.85vw;
+            border-radius: 0.4vw;
+            text-transform: uppercase;
+        }
+
+        .seen-badge {
+            background: var(--danger-bg);
+            border: 2px solid var(--danger-red);
+            color: #FDA4AF;
+            font-weight: 800;
+            font-size: clamp(0.88rem, 1.12vw, 1.3rem);
+            padding: 0.4vh 0.8vw;
+            border-radius: 0.4vw;
+        }
+
+        .scenario-narrative {
+            background: var(--bg-deep);
+            border-left: 5px solid var(--sky-bright);
+            padding: 1.1vh 1.1vw;
+            border-radius: 0.5vw;
+            font-size: clamp(1rem, 1.32vw, 1.55rem);
+            line-height: 1.35;
+            font-weight: 700;
+            color: var(--white-pure);
+            flex-shrink: 0;
+        }
+
+        /* OLAY SİMÜLASYON KUTUSU */
+        .phone-chat-box {
+            background: #071327;
+            border: 2px solid #334155;
+            border-radius: 0.9vw;
+            padding: 1.2vh 1.1vw;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9vh;
+            flex: 1;
+            min-height: 0;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0F2547;
+            padding: 0.7vh 1vw;
+            border-radius: 0.5vw;
+            border-bottom: 2px solid var(--sky-bright);
+            flex-shrink: 0;
+        }
+
+        .chat-group-name {
+            font-size: clamp(0.95rem, 1.3vw, 1.5rem);
+            font-weight: 900;
+            color: var(--white-pure);
+        }
+
+        .chat-online-info {
+            font-size: clamp(0.82rem, 1.05vw, 1.22rem);
+            color: var(--sky-soft);
+            font-weight: 700;
+        }
+
+        .chat-bubble-incoming {
+            background: #1E293B;
+            border: 2px solid var(--danger-red);
+            border-radius: 0.8vw;
+            padding: 1.1vh 1.1vw;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .chat-sender {
+            font-size: clamp(0.9rem, 1.15vw, 1.35rem);
+            font-weight: 900;
+            color: #FDA4AF;
+            margin-bottom: 0.35vh;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chat-message-text {
+            font-size: clamp(1rem, 1.32vw, 1.56rem);
+            font-weight: 700;
+            color: var(--white-pure);
+            line-height: 1.32;
+        }
+
+        .chat-read-receipt {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: clamp(0.84rem, 1.08vw, 1.25rem);
+            color: var(--accent-gold);
+            font-weight: 800;
+            padding-top: 0.5vh;
+        }
+
+        .chat-bubble-reply {
+            background: var(--success-bg);
+            border: 2px solid var(--success-emerald);
+            border-radius: 0.8vw;
+            padding: 0.9vh 1.1vw;
+            display: none;
+            flex-shrink: 0;
+        }
+
+        .chat-bubble-reply.visible {
+            display: block;
+        }
+
+        .chat-reply-header {
+            font-size: clamp(0.88rem, 1.12vw, 1.3rem);
+            font-weight: 900;
+            color: #6EE7B7;
+            margin-bottom: 0.25vh;
+        }
+
+        .chat-reply-text {
+            font-size: clamp(0.95rem, 1.24vw, 1.45rem);
+            font-weight: 800;
+            color: var(--white-pure);
+            line-height: 1.28;
+        }
+
+        .verse-footer-box {
+            background: #091936;
+            border: 1px solid var(--sky-bright);
+            border-radius: 0.6vw;
+            padding: 0.85vh 1vw;
+            font-size: clamp(0.88rem, 1.14vw, 1.34rem);
+            color: var(--sky-soft);
+            font-weight: 700;
+            line-height: 1.3;
+            flex-shrink: 0;
+        }
+
+        /* SAĞ SÜTUN: KARAR MEKANİZMASI VE ANLIK GERİ BİLDİRİM */
+        .decision-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.1vh;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .decision-prompt-header {
+            background: var(--bg-navy);
+            border: 2px solid var(--sky-bright);
+            border-radius: 0.9vw;
+            padding: 1.1vh 1.4vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            gap: 1vw;
+        }
+
+        .decision-prompt-title {
+            font-size: clamp(1.15rem, 1.65vw, 1.95rem);
+            font-weight: 900;
+            color: var(--white-pure);
+        }
+
+        .decision-step-hint {
+            font-size: clamp(0.9rem, 1.15vw, 1.35rem);
+            color: var(--accent-gold);
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        /* DEVASA DOKUNMA ALANLI SEÇENEK BUTONLARI */
+        .choices-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2vh;
+            flex: 1;
+            min-height: 0;
+            justify-content: center;
+        }
+
+        .choice-btn {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            background: var(--bg-card);
+            border: 3px solid var(--sky-bright);
+            border-radius: 1vw;
+            padding: 1.1vh 1.4vw;
+            color: var(--white-pure);
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1.2vw;
+            transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+        }
+
+        .choice-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--white-pure);
+            transform: translateX(6px);
+        }
+
+        .choice-btn:active {
+            transform: scale(0.99);
+        }
+
+        .choice-letter {
+            flex: 0 0 auto;
+            width: clamp(2.6rem, 3.6vw, 4.2rem);
+            height: clamp(2.6rem, 3.6vw, 4.2rem);
+            border-radius: 0.7vw;
+            background: var(--sky-bright);
+            color: var(--bg-deep);
+            font-size: clamp(1.25rem, 1.8vw, 2.1rem);
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        }
+
+        .choice-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35vh;
+            overflow: hidden;
+        }
+
+        .choice-title {
+            font-size: clamp(1.08rem, 1.48vw, 1.75rem);
+            font-weight: 900;
+            color: var(--white-pure);
+            line-height: 1.26;
+        }
+
+        .choice-sub {
+            font-size: clamp(0.9rem, 1.15vw, 1.35rem);
+            color: var(--sky-soft);
+            font-weight: 700;
+        }
+
+        /* Seçenek durum renkleri */
+        .choice-btn.state-wrong {
+            background: var(--danger-bg);
+            border-color: var(--danger-red);
+        }
+        .choice-btn.state-wrong .choice-letter {
+            background: var(--danger-red);
+            color: var(--white-pure);
+        }
+
+        .choice-btn.state-warning {
+            background: var(--warning-bg);
+            border-color: var(--warning-amber);
+        }
+        .choice-btn.state-warning .choice-letter {
+            background: var(--warning-amber);
+            color: var(--bg-deep);
+        }
+
+        .choice-btn.state-correct {
+            background: var(--success-bg);
+            border-color: var(--success-emerald);
+        }
+        .choice-btn.state-correct .choice-letter {
+            background: var(--success-emerald);
+            color: var(--bg-deep);
+        }
+
+        /* SÜREÇ DEĞERLENDİRME VE PEDAGOJİK DÖNÜT PANELİ */
+        .feedback-panel {
+            min-height: 20.5vh;
+            background: var(--bg-navy);
+            border: 3px solid var(--sky-bright);
+            border-radius: 1vw;
+            padding: 1.3vh 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0.7vh;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .feedback-panel.tone-wrong {
+            background: var(--danger-bg);
+            border-color: var(--danger-red);
+        }
+
+        .feedback-panel.tone-warning {
+            background: var(--warning-bg);
+            border-color: var(--warning-amber);
+        }
+
+        .feedback-panel.tone-correct {
+            background: var(--success-bg);
+            border-color: var(--success-emerald);
+        }
+
+        .feedback-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1vw;
+        }
+
+        .feedback-status-title {
+            font-size: clamp(1.12rem, 1.55vw, 1.85rem);
+            font-weight: 900;
+            color: var(--accent-gold);
+        }
+
+        .feedback-badge {
+            font-size: clamp(0.88rem, 1.15vw, 1.35rem);
+            font-weight: 900;
+            padding: 0.35vh 0.85vw;
+            border-radius: 0.5vw;
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--white-pure);
+            white-space: nowrap;
+        }
+
+        .feedback-body-text {
+            font-size: clamp(0.98rem, 1.32vw, 1.55rem);
+            font-weight: 700;
+            color: var(--white-pure);
+            line-height: 1.32;
+        }
+
+        .feedback-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1vw;
+            padding-top: 0.3vh;
+        }
+
+        .feedback-wisdom {
+            font-size: clamp(0.88rem, 1.15vw, 1.35rem);
+            color: var(--sky-soft);
+            font-weight: 800;
+            font-style: italic;
+        }
+
+        .btn-next-victory {
+            display: none;
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+            border: 2px solid var(--white-pure);
+            border-radius: 0.7vw;
+            padding: 0.95vh 1.6vw;
+            font-size: clamp(1rem, 1.35vw, 1.6rem);
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(250, 204, 21, 0.45);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .btn-next-victory.visible {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55vw;
+        }
+
+        .btn-next-victory:hover {
+            background: var(--white-pure);
+        }
+
+        /* =========================================================
+           3. EKRAN: SONUÇ VE ÖZDENETİM ZAFERİ EKRANI
+           ========================================================= */
+        .summary-layout {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            padding: 0.6vh 1.5vw;
+            overflow: hidden;
+            gap: 1.4vh;
+        }
+
+        .victory-banner {
+            background: var(--success-bg);
+            border: 3px solid var(--success-emerald);
+            border-radius: 1.2vw;
+            padding: 1.5vh 2.5vw;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+        }
+
+        .victory-title {
+            font-size: clamp(1.65rem, 2.7vw, 3.2rem);
+            font-weight: 900;
+            color: var(--white-pure);
+        }
+
+        .victory-subtitle {
+            font-size: clamp(1.05rem, 1.45vw, 1.75rem);
+            color: #A7F3D0;
+            font-weight: 800;
+            margin-top: 0.4vh;
+        }
+
+        .summary-cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2vw;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            align-items: stretch;
+        }
+
+        .summary-card {
+            flex: 1 1 21vw;
+            background: var(--bg-navy);
+            border: 2px solid var(--sky-bright);
+            border-radius: 1vw;
+            padding: 1.6vh 1.3vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.8vh;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .summary-card-tag {
+            font-size: clamp(0.82rem, 1.05vw, 1.22rem);
+            font-weight: 900;
+            color: var(--sky-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .summary-card h4 {
+            font-size: clamp(1.08rem, 1.45vw, 1.72rem);
+            color: var(--accent-gold);
+            font-weight: 900;
+        }
+
+        .summary-card p {
+            font-size: clamp(0.95rem, 1.22vw, 1.44rem);
+            color: var(--white-pure);
+            line-height: 1.34;
+            font-weight: 600;
+        }
+
+        .summary-actions {
+            display: flex;
+            gap: 1.5vw;
+            flex-shrink: 0;
+        }
+
+        /* ALT BİLGİ ÇUBUĞU (FOOTER) */
+        footer.bottom-bar {
+            width: 100%;
+            height: 7vh;
+            min-height: 42px;
+            background-color: var(--bg-navy);
+            border-top: 2px solid var(--sky-bright);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.2vw;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .footer-left {
+            font-size: clamp(0.9rem, 1.2vw, 1.4rem);
+            font-weight: 800;
+            color: var(--sky-soft);
+        }
+
+        .footer-center-values {
+            font-size: clamp(0.9rem, 1.15vw, 1.35rem);
+            font-weight: 700;
+            color: var(--white-pure);
+            background: var(--bg-card);
+            padding: 0.4vh 1.1vw;
+            border-radius: 0.5vw;
+            border: 1px solid var(--sky-bright);
+        }
+
+        /* KURAL 5: "Hazırlayan: Ahmet ŞEN" sadece bir defa, en altta ve sadece ana ekranda yer alır */
+        .footer-author {
+            font-size: clamp(0.95rem, 1.25vw, 1.45rem);
+            font-weight: 900;
+            color: var(--accent-gold);
+            letter-spacing: 0.03em;
+        }
+    
+    /* === MAARİFİN KALBİNDE OYUN: KATILIM MODU & 2-10 GRUP YARIŞMASI STANDARDI === */
+    .play-type-box {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(6px, 0.85vh, 10px);
+      background-color: var(--bg-surface, rgba(15, 23, 42, 0.78));
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.45));
+      border-radius: var(--radius-md, 14px);
+      padding: clamp(8px, 1vh, 14px) clamp(12px, 1.4vw, 20px);
+      margin: clamp(6px, 0.8vh, 12px) 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .play-type-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .play-type-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .play-tab-btn {
+      padding: clamp(6px, 0.8vh, 11px) clamp(12px, 1.3vw, 20px);
+      border-radius: var(--radius-md, 12px);
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.45));
+      background-color: var(--bg-card, rgba(30, 41, 59, 0.8));
+      color: var(--text-main, #f8fafc);
+      font-family: inherit;
+      font-size: clamp(0.86rem, 1.08vw, 1.2rem);
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .play-tab-btn.selected, .play-tab-btn.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a;
+      border-color: #fde68a;
+      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5);
+    }
+    .group-setup-panel {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(6px, 0.8vh, 10px);
+      border-top: 1.5px solid var(--border-crisp, rgba(251, 191, 36, 0.35));
+      padding-top: clamp(6px, 0.8vh, 10px);
+    }
+    .group-setup-panel[hidden] {
+      display: none !important;
+    }
+    .group-count-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: clamp(0.86rem, 1.05vw, 1.18rem);
+      font-weight: 800;
+      color: var(--text-main, #f8fafc);
+    }
+    .group-counter-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .qty-btn {
+      width: clamp(34px, 2.8vw, 44px);
+      height: clamp(34px, 2.8vw, 44px);
+      border-radius: var(--radius-md, 10px);
+      border: 2px solid var(--accent-primary, #fbbf24);
+      background-color: var(--bg-surface, #1e293b);
+      color: var(--text-main, #f8fafc);
+      font-size: clamp(1.05rem, 1.3vw, 1.45rem);
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qty-btn:hover:not(:disabled) {
+      border-color: #fbbf24;
+      background-color: rgba(251, 191, 36, 0.2);
+    }
+    .group-count-input {
+      width: clamp(54px, 4.5vw, 72px);
+      height: clamp(34px, 2.8vw, 44px);
+      text-align: center;
+      border-radius: var(--radius-md, 10px);
+      border: 2px solid var(--gold, #fbbf24);
+      background-color: var(--bg-deep, #0f172a);
+      color: var(--gold, #fbbf24);
+      font-family: inherit;
+      font-size: clamp(0.95rem, 1.2vw, 1.35rem);
+      font-weight: 900;
+    }
+    .group-names-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: clamp(6px, 0.6vw, 10px);
+      width: 100%;
+    }
+    .group-name-input {
+      width: 100%;
+      background-color: var(--bg-deep, #0f172a);
+      color: var(--text-main, #f8fafc);
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.4));
+      border-radius: var(--radius-md, 10px);
+      padding: clamp(5px, 0.65vh, 9px) clamp(8px, 0.8vw, 12px);
+      font-family: inherit;
+      font-size: clamp(0.82rem, 0.98vw, 1.1rem);
+      font-weight: 800;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .group-name-input:focus {
+      outline: 2px solid #fbbf24;
+      border-color: #fbbf24;
+    }
+    .groups-scoreboard-strip {
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 0.7vw, 12px);
+      background-color: var(--bg-surface, rgba(15, 23, 42, 0.88));
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.5));
+      border-radius: var(--radius-md, 12px);
+      padding: clamp(5px, 0.65vh, 9px) clamp(10px, 1.1vw, 16px);
+      margin: 6px 0;
+      flex-shrink: 0;
+      overflow-x: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .groups-scoreboard-strip[hidden] {
+      display: none !important;
+    }
+    .turn-indicator-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      background-color: var(--gold-bg, rgba(251, 191, 36, 0.18));
+      border: 2.5px solid var(--gold, #fbbf24);
+      color: var(--gold, #fbbf24);
+      border-radius: 999px;
+      padding: clamp(4px, 0.55vh, 8px) clamp(10px, 1vw, 16px);
+      font-size: clamp(0.82rem, 1.02vw, 1.18rem);
+      font-weight: 900;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .groups-cards-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: clamp(6px, 0.65vw, 10px);
+      flex: 1 1 auto;
+    }
+    .group-score-card {
+      flex: 1 1 115px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background-color: var(--bg-card, rgba(30, 41, 59, 0.85));
+      border: 2px solid var(--border-crisp, rgba(148, 163, 184, 0.35));
+      border-radius: var(--radius-md, 10px);
+      padding: clamp(4px, 0.55vh, 8px) clamp(8px, 0.9vw, 14px);
+      font-size: clamp(0.8rem, 0.98vw, 1.12rem);
+      font-weight: 800;
+      color: var(--text-soft, #cbd5e1);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      min-width: 0;
+    }
+    .group-score-card.active-turn {
+      background-color: var(--gold-bg, rgba(251, 191, 36, 0.22));
+      border: 2.5px solid var(--gold, #fbbf24);
+      color: var(--text-main, #ffffff);
+      box-shadow: 0 0 0 2px var(--gold, #fbbf24);
+      transform: translateY(-1px);
+    }
+    .group-card-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .group-card-pts {
+      color: var(--gold, #fbbf24);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .maarif-group-result-box {
+      width: 100%;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 32vh;
+      overflow-y: auto;
+    }
+    .maarif-leader-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 2px solid rgba(148, 163, 184, 0.35);
+      font-weight: 800;
+      font-size: clamp(0.9rem, 1.1vw, 1.25rem);
+      color: #f8fafc;
+    }
+    .maarif-leader-row.top-1 {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.28), rgba(217, 119, 6, 0.22));
+      border: 2.5px solid #fbbf24;
+      color: #fde68a;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+    }
+
+  
+    
+
+  
+    /* === ANA SAYFA (KARŞILAMA EKRANI) SIFIR TAŞMA VE OTOMATİK SIĞDIRMA MİMARİSİ V2 === */
+    #screen-home, #home-screen, #homeScreen, #screenHome,
+    #screen-start, #start-screen, #startScreen, #screenStart,
+    #screen-setup, #setup-screen, #setupScreen, #screenSetup,
+    #intro-screen, #introScreen, #welcome-screen, #welcomeScreen,
+    #gradeSelectionScreen, #screen-menu, #menuScreen {
+      max-height: 100dvh !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .bireysel-mode-switch {
+      display: none !important;
+    }
+    .play-type-box {
+      padding: clamp(4px, 0.5vh, 7px) clamp(8px, 0.9vw, 12px) !important;
+      margin: clamp(2px, 0.3vh, 5px) 0 !important;
+      gap: clamp(3px, 0.35vh, 5px) !important;
+      flex-shrink: 0 !important;
+    }
+    .play-tab-btn {
+      padding: clamp(3px, 0.45vh, 7px) clamp(8px, 0.9vw, 12px) !important;
+      font-size: clamp(0.75rem, 0.88vw, 1rem) !important;
+      min-height: 30px !important;
+    }
+    .group-setup-panel {
+      gap: clamp(3px, 0.35vh, 5px) !important;
+      padding-top: clamp(3px, 0.35vh, 5px) !important;
+    }
+    .group-names-grid {
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+      gap: clamp(3px, 0.35vw, 6px) !important;
+      max-height: 8.5vh !important;
+      overflow-y: auto !important;
+    }
+    .group-name-input {
+      padding: clamp(2px, 0.3vh, 4px) clamp(4px, 0.45vw, 8px) !important;
+      font-size: clamp(0.72rem, 0.82vw, 0.92rem) !important;
+      min-height: 26px !important;
+    }
+    .bireysel-setup-panel {
+      padding: clamp(4px, 0.45vh, 7px) clamp(8px, 0.85vw, 12px) !important;
+      gap: clamp(3px, 0.35vh, 5px) !important;
+      margin-bottom: clamp(2px, 0.25vh, 4px) !important;
+      max-height: 11.5vh !important;
+      overflow-y: auto !important;
+    }
+    .bireysel-textarea {
+      min-height: 30px !important;
+      max-height: 44px !important;
+    }
+    .bireysel-chips {
+      max-height: 40px !important;
+    }
+
+  
+    /* === ÜST BAR (NASIL OYNANIR, ANA SAYFA, TAM EKRAN) VE NASIL OYNANIR MODALI === */
+    .how-to-play-card {
+      display: none !important;
+    }
+    .home-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .maarif-top-btn {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4em;
+      background-color: var(--bg-card, rgba(30, 41, 59, 0.9));
+      color: var(--text-white, var(--text-main, #f8fafc));
+      border: 2px solid var(--accent-sky, var(--gold, #fbbf24));
+      border-radius: 10px;
+      padding: clamp(5px, 0.65vh, 9px) clamp(10px, 1vw, 15px);
+      font-family: inherit;
+      font-size: clamp(0.82rem, 1.05vw, 1.2rem);
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+    .maarif-top-btn:hover {
+      filter: brightness(1.12);
+    }
+    .maarif-top-btn:active {
+      transform: translateY(1px);
+    }
+    .maarif-howto-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.82);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2vh 2vw;
+    }
+    .maarif-howto-backdrop.open {
+      display: flex;
+    }
+    .maarif-howto-modal {
+      width: min(92vw, 860px);
+      max-height: 86vh;
+      background: var(--bg-card, #0f172a);
+      color: var(--text-white, var(--text-main, #f8fafc));
+      border: 3px solid var(--accent-gold, var(--gold, #fbbf24));
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .maarif-howto-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 2px solid rgba(251, 191, 36, 0.4);
+    }
+    .maarif-howto-header h3 {
+      margin: 0;
+      font-size: clamp(1.1rem, 1.5vw, 1.65rem);
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    .maarif-howto-close {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 2px solid #f87171;
+      border-radius: 10px;
+      padding: 5px 12px;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .maarif-howto-body {
+      padding: 18px 22px;
+      overflow-y: auto;
+      font-size: clamp(0.95rem, 1.2vw, 1.3rem);
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+  </style>
+</head>
+<body>
+
+    <!-- ÜST BİLGİ ALANI -->
+    <header class="top-bar">
+        <div class="brand-box">
+            <span class="brand-badge">DKAB • AHLAK</span>
+            <h1 class="brand-title">Maarifin Kalbinde Oyun</h1>
+            <span id="headerSubtitle" class="brand-subtitle">ÖZDENETİM (Nefis Terbiyesi) — 4 Aşamalı Karar Sınavı</span>
+        </div>
+
+        <div class="hud-controls">
+            <div id="stagePill" class="stage-pill">Aşama 1 / 4</div>
+
+            <div class="meter-pill" title="Özdenetim ve İrade Seviyesi">
+                <span class="meter-label">İrade:</span>
+                <div class="meter-bar-wrap">
+                    <div id="willpowerBar" class="meter-bar-fill" style="width: 50%;"></div>
+                </div>
+                <span id="willpowerText" class="meter-value">50%</span>
+            </div>
+
+            <button id="soundToggleBtn" class="btn-icon" type="button" aria-label="Sesi Aç veya Kapat">
+                <span id="soundIcon">🔊</span>
+                <span id="soundLabel">Ses Açık</span>
+            </button>
+
+            <button id="homeResetBtn" class="btn-icon" type="button" style="display: none;" aria-label="Ana Ekrana Dön">
+                <span>🏠</span>
+                <span>Ana Ekran</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ANA ETKİLEŞİM SAHNESİ -->
+    <main class="stage">
+
+        <!-- 1. AÇILIŞ EKRANI (ANA EKRAN) -->
+        <section id="screenIntro" class="screen active" aria-label="Açılış Ekranı">
+            <div class="intro-layout">
+                <div class="code-tag">4 AŞAMALI ÖZDENETİM YOLCULUĞU</div>
+
+                <h2 class="hero-title">
+                    ÖZDENETİM <span>(Nefis Terbiyesi)</span>
+                </h2>
+
+                <p class="hero-desc">
+                    Dijital dünyada, okul koridorunda ve vicdanımızla baş başa kaldığımız anlarda öfkemize ve nefsimize yenilecek miyiz, yoksa irademizle vakur bir duruş mu sergileyeceğiz?
+                </p>
+
+                <div class="pillars-grid">
+                    <div class="pillar-card">
+                        <h3>📱 1. Dijital Kışkırtma</h3>
+                        <p>Sınıf WhatsApp grubundaki haksız ve alaycı bir mesaja karşı öfke kontrolü ve vakur duruş.</p>
+                    </div>
+                    <div class="pillar-card">
+                        <h3>🛡️ 2. Mahremiyet &amp; Gıybet</h3>
+                        <p>Başkasının özel mesajıyla dalga geçilen bir paylaşıma ortak olmamak ve kul hakkını korumak.</p>
+                    </div>
+                    <div class="pillar-card">
+                        <h3>📝 3. Vicdan &amp; Emek</h3>
+                        <p>Kimsenin görmediği bir sınav anında kolaycı hileye değil, helal emeğe ve dürüstlüğe sarılmak.</p>
+                    </div>
+                    <div class="pillar-card">
+                        <h3>⚖️ 4. Sabır &amp; Vakar</h3>
+                        <p>Okul bahçesindeki sözlü tahrik karşısında şiddete başvurmadan nefsine hâkim kalabilmek.</p>
+                    </div>
+                </div>
+
+                <button id="startScenarioBtn" class="cta-start-btn" type="button">
+                    <span>1. SENARYOYU BAŞLAT</span>
+                    <span>▶</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. SENARYO VE KARAR MEKANİZMASI EKRANI -->
+        <section id="screenGame" class="screen" aria-label="Senaryo ve Karar Ekranı">
+            <div class="game-columns">
+
+                <!-- SOL SÜTUN: OLAY SİMÜLASYONU -->
+                <div class="scenario-column">
+                    <div class="scenario-badge-row">
+                        <span id="scenarioTag" class="scenario-tag">AŞAMA 1 • DİJİTAL KIŞKIRTMA</span>
+                        <span id="seenBadge" class="seen-badge">👁️ 28 Kişi Okudu</span>
+                    </div>
+
+                    <div id="scenarioNarrativeText" class="scenario-narrative"></div>
+
+                    <div class="phone-chat-box">
+                        <div class="chat-header">
+                            <span id="simBoxTitle" class="chat-group-name">💬 Sınıf WhatsApp Grubu</span>
+                            <span id="simBoxMeta" class="chat-online-info">Çevrimiçi • Tüm Sınıf</span>
+                        </div>
+
+                        <div class="chat-bubble-incoming">
+                            <div class="chat-sender">
+                                <span id="simSenderName">Sınıf Grubu Üyesi</span>
+                                <span id="simTime">19:42</span>
+                            </div>
+                            <p id="incomingProvocationText" class="chat-message-text"></p>
+                            <div class="chat-read-receipt">
+                                <span id="simWarningLabel"></span>
+                                <span id="simStatusLabel"></span>
+                            </div>
+                        </div>
+
+                        <div id="dignifiedReplyBubble" class="chat-bubble-reply">
+                            <div id="replyHeader" class="chat-reply-header"></div>
+                            <p id="replyText" class="chat-reply-text"></p>
+                        </div>
+                    </div>
+
+                    <div id="verseFooterBox" class="verse-footer-box"></div>
+                </div>
+
+                <!-- SAĞ SÜTUN: KARAR MEKANİZMASI -->
+                <div class="decision-column">
+                    <div class="decision-prompt-header">
+                        <h2 id="decisionPromptTitle" class="decision-prompt-title">Karar Mekanizması: Nasıl Tepki Verirsin?</h2>
+                        <span id="decisionStepHint" class="decision-step-hint">Seçimini yap ve sonucu keşfet</span>
+                    </div>
+
+                    <div class="choices-list">
+                        <button id="choiceBtnA" class="choice-btn" type="button" data-choice="A">
+                            <div class="choice-letter">A</div>
+                            <div class="choice-content">
+                                <div id="choiceTitleA" class="choice-title"></div>
+                                <div id="choiceSubA" class="choice-sub"></div>
+                            </div>
+                        </button>
+
+                        <button id="choiceBtnB" class="choice-btn" type="button" data-choice="B">
+                            <div class="choice-letter">B</div>
+                            <div class="choice-content">
+                                <div id="choiceTitleB" class="choice-title"></div>
+                                <div id="choiceSubB" class="choice-sub"></div>
+                            </div>
+                        </button>
+
+                        <button id="choiceBtnC" class="choice-btn" type="button" data-choice="C">
+                            <div class="choice-letter">C</div>
+                            <div class="choice-content">
+                                <div id="choiceTitleC" class="choice-title"></div>
+                                <div id="choiceSubC" class="choice-sub"></div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- SÜREÇ DEĞERLENDİRME DÖNÜT KUTUSU -->
+                    <div id="feedbackPanel" class="feedback-panel" aria-live="polite">
+                        <div class="feedback-top-row">
+                            <span id="feedbackTitle" class="feedback-status-title">🧭 Karar Analizi Bekleniyor</span>
+                            <span id="feedbackBadge" class="feedback-badge">İrade Sınavı</span>
+                        </div>
+                        <p id="feedbackBody" class="feedback-body-text"></p>
+                        <div class="feedback-actions-row">
+                            <span id="feedbackWisdom" class="feedback-wisdom"></span>
+                            <button id="toNextBtn" class="btn-next-victory" type="button">
+                                <span id="nextBtnText">SONRAKİ SENARYO</span>
+                                <span>➔</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 3. SONUÇ EKRANI -->
+        <section id="screenSummary" class="screen" aria-label="Sonuç ve Değerlendirme Ekranı">
+            <div class="summary-layout">
+                <div class="victory-banner">
+                    <h2 class="victory-title">🏆 İRADE ZAFERİ VE KARAKTER ASALETİ!</h2>
+                    <p id="victorySubtitle" class="victory-subtitle">
+                        4 Aşamalı Özdenetim (Nefis Terbiyesi) Sınavını Başarıyla Tamamladın!
+                    </p>
+                </div>
+
+                <div class="summary-cards-grid">
+                    <div class="summary-card">
+                        <span class="summary-card-tag">1. Aşama • Dijital Kışkırtma</span>
+                        <h4>🛡️ Öfkeyi Yutmak</h4>
+                        <p>Hakaret ve kavgaya sürüklenmeden özelden vakur bir dille hakkını aramak, gerçek güç ve nefis terbiyesidir.</p>
+                    </div>
+
+                    <div class="summary-card">
+                        <span class="summary-card-tag">2. Aşama • Mahremiyet</span>
+                        <h4>🤝 Gıybete Ortak Olmamak</h4>
+                        <p>Başkasının özelini alay konusu yapan paylaşıma katılmamak ve silinmesini istemek kul hakkına saygıdır.</p>
+                    </div>
+
+                    <div class="summary-card">
+                        <span class="summary-card-tag">3. Aşama • Vicdan Sınavı</span>
+                        <h4>💎 Helal Emek &amp; Dürüstlük</h4>
+                        <p>Kimse görmese de Rabbimizin gördüğü bilinciyle hileden uzak durmak, özdenetimin en yüksek basamağıdır.</p>
+                    </div>
+
+                    <div class="summary-card">
+                        <span class="summary-card-tag">4. Aşama • Sözlü Tahrik</span>
+                        <h4>🌿 Sabır ve Olgunluk</h4>
+                        <p>Tahrik anında derin bir nefes alıp şiddete veya küsmeye yönelmeden kurallar içinde kalmak karakter asaletidir.</p>
+                    </div>
+                </div>
+
+                <div class="summary-actions">
+                    <button id="replayScenarioBtn" class="cta-start-btn" type="button">
+                        <span>🔄 TÜM SENARYOLARI TEKRAR OYNA</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ALT BİLGİ ALANI (FOOTER) -->
+    <footer class="bottom-bar">
+        <div class="footer-left">Maarifin Kalbinde Oyun • Türkiye Yüzyılı Maarif Modeli</div>
+        <div class="footer-center-values">Kök Değerler: Özdenetim • Saygı • Adalet • Sorumluluk</div>
+        <!-- KURAL 5: "Hazırlayan: Ahmet ŞEN" sadece bir defa, en altta ve sadece ana ekranda görünür -->
+        <div id="authorSignature" class="footer-author">Hazırlayan: Ahmet ŞEN</div>
+    </footer>
+
+    <script>
+        /* =========================================================
+           WEB AUDIO API — GERÇEK ZAMANLI SES EFEKTİ MOTORU
+           ========================================================= */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playWrong() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                [240, 175].forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    const start = now + idx * 0.18;
+                    const dur = 0.24;
+                    osc.frequency.setValueAtTime(f, start);
+                    osc.frequency.linearRampToValueAtTime(f * 0.78, start + dur);
+
+                    gain.gain.setValueAtTime(0.22, start);
+                    gain.gain.exponentialRampToValueAtTime(0.008, start + dur);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + dur);
+                });
+            }
+
+            playWarning() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                [0, 0.22].forEach((offset) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    const start = now + offset;
+                    const dur = 0.16;
+                    osc.frequency.setValueAtTime(440, start);
+                    osc.frequency.setValueAtTime(370, start + 0.08);
+
+                    gain.gain.setValueAtTime(0.26, start);
+                    gain.gain.exponentialRampToValueAtTime(0.01, start + dur);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + dur);
+                });
+            }
+
+            playSuccess() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, index) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    const start = now + index * 0.11;
+                    const dur = index === notes.length - 1 ? 0.45 : 0.18;
+
+                    osc.frequency.setValueAtTime(freq, start);
+                    gain.gain.setValueAtTime(0.25, start);
+                    gain.gain.exponentialRampToValueAtTime(0.008, start + dur);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + dur);
+                });
+            }
+
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(620, now);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.008, now + 0.06);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.06);
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        /* =========================================================
+           ÇOK AŞAMALI ÖZDENETİM SENARYO VERİ TABANI (4 AŞAMA)
+           ========================================================= */
+        const SCENARIOS = [
+            {
+                id: 1,
+                tag: 'AŞAMA 1 • DİJİTAL KIŞKIRTMA',
+                seenBadge: '👁️ 28 Kişi Okudu',
+                narrative: '<strong>Senaryo:</strong> Sınıfın WhatsApp grubunda, sen yokken birisi senin hakkında haksız, alaycı ve kışkırtıcı bir mesaj yazar. Telefonu eline aldığında herkesin bu mesajı okuduğunu görürsün.',
+                simBoxTitle: '💬 Sınıf WhatsApp Grubu',
+                simBoxMeta: 'Çevrimiçi • Tüm Sınıf',
+                simSenderName: 'Sınıf Grubu Üyesi',
+                simTime: '19:42',
+                simMessage: '"Bugün projede yine hiçbir şey yapmadı, zaten hep başkalarının emeğine konuyor hahaha! 😂 Gösteriş meraklısı!"',
+                simWarningLabel: '⚠️ Haksız, alaycı ve kışkırtıcı mesaj',
+                simStatusLabel: '✓✓ Herkes tarafından görüldü',
+                replyHeader: '🔒 Özel Mesaj (Sen → Arkadaşına)',
+                replyText: '"Bu yazdığın doğru değil, düzeltmeni bekliyorum."',
+                verseHtml: '📖 <strong>Rehber İlkemiz:</strong> "O takva sahipleri ki, öfkelerini yutarlar ve insanları affederler..." <em>(Âl-i İmrân Suresi, 134. Ayet)</em>',
+                promptTitle: 'Karar Mekanizması: Nasıl Tepki Verirsin?',
+                initialBody: 'Telefon ekranındaki kışkırtıcı mesaj karşısında kalp atışların hızlandı. Şimdi nefsini terbiye etme ve özdenetim gösterme zamanı. Yukarıdaki üç karardan birine dokun!',
+                initialWisdom: '💡 "Pehlivan, güreşte rakibini yenen değil; öfke anında nefsine hâkim olandır." (Hadis-i Şerif)',
+                choices: {
+                    A: {
+                        type: 'wrong',
+                        title: 'Aynı sertlikte, hakaret dolu bir mesajla gruba saldırmak.',
+                        sub: 'Tepkisel Öfke • Dijital Misilleme',
+                        fbTitle: '❌ SONUÇ: Öfkeye Yenilme ve Seviye Kaybı!',
+                        fbBadge: 'Yanlış Karar • Seviye Kaybı',
+                        fbBody: 'Aynı sertlikte, hakaret dolu bir mesajla gruba saldırdığında öfkene yenildin! Siber zorbalığa zorbalıkla karşılık vermek seni haklıyken haksız duruma düşürdü ve gruptaki saygınlığını zedeledi.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Kötü söz sahibine aittir; öfkeyle yazılan her hakaret özdenetim kaybıdır. Vakur bir çözüm seç!'
+                    },
+                    B: {
+                        type: 'warning',
+                        title: 'Gruptan sinirle çıkıp ertesi gün okulda onunla kavga etmek.',
+                        sub: 'Kontrolsüz Tepki • Fiziksel Çatışma',
+                        fbTitle: '⚠️ SONUÇ: Kontrolsüzlük ve Bedensel Şiddet!',
+                        fbBadge: 'Tehlikeli Tepki • Uyarı',
+                        fbBody: 'Gruptan sinirle çıkıp ertesi gün okulda onunla kavga etmek kontrolsüzlüktür ve bedensel şiddete yol açar! Şiddet, dijital ortamdaki iftirayı düzeltmez; aksine okul huzuruna zarar verir.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: İletişimi koparıp şiddete başvurmak sorunu büyütür. Nefsine hâkim olacağın doğru adımı bul!'
+                    },
+                    C: {
+                        type: 'correct',
+                        title: 'Öfkeni yutup özelden "Bu yazdığın doğru değil, düzeltmeni bekliyorum" yazarak vakur durmak.',
+                        sub: 'Özdenetim (Nefis Terbiyesi) • Vakur ve Adil Duruş',
+                        fbTitle: '🌟 SONUÇ: İrade Zaferi ve Karakter Asaleti!',
+                        fbBadge: 'Doğru Karar • Özdenetim Zaferi',
+                        fbBody: 'Tebrikler! Öfkeni yutup özelden "Bu yazdığın doğru değil, düzeltmeni bekliyorum" yazarak vakur durdun. Ne hakarete alçaldın ne de şiddete başvurdun; hakkını onurlu ve adil bir ahlakla korudun.',
+                        fbWisdom: '✅ Kazanım: Gerçek güç, kışkırtma anında nefsi terbiye edip karakter asaletini korumaktır.'
+                    }
+                }
+            },
+            {
+                id: 2,
+                tag: 'AŞAMA 2 • MAHREMİYET VE GIYBET',
+                seenBadge: '📸 Ekran Görüntüsü',
+                narrative: '<strong>Senaryo:</strong> Bir arkadaşın, sınıftaki başka bir öğrencinin özel mesajının ekran görüntüsünü izinsiz alıp alay etmek için gruba atar ve "Sen de bir yorum yap, gülelim" diyerek seni etiketler.',
+                simBoxTitle: '📱 Arkadaş Sohbet Grubu',
+                simBoxMeta: '14 Üye • @Sen Etiketlendin',
+                simSenderName: 'Grup Arkadaşın',
+                simTime: '20:15',
+                simMessage: '"Bakın şunun yazdığına koptum 😂😂 @Sen de bir şeyler yazsana, tam komedi değil mi?"',
+                simWarningLabel: '⚠️ İzinsiz ekran görüntüsü & gıybet daveti',
+                simStatusLabel: '🔔 Yanıtın bekleniyor',
+                replyHeader: '🛡️ Senin Gruba Yazdığın Vakur Mesaj',
+                replyText: '"Arkadaşımızın özelini paylaşmak ve arkasından konuşmak bize yakışmaz, lütfen fotoğrafı sil."',
+                verseHtml: '📖 <strong>Rehber İlkemiz:</strong> "Birbirinizin kusurunu araştırmayın, biriniz diğerinizi arkasından çekiştirmesin..." <em>(Hucurât Suresi, 12. Ayet)</em>',
+                promptTitle: 'Karar Mekanizması: Bu Paylaşıma Nasıl Tepki Verirsin?',
+                initialBody: 'Grubun eğlence beklentisine uyup popüler olmak kolay görünüyor; ancak ortada bir kul hakkı ve mahremiyet ihlali var. Özdenetimini nasıl kullanırsın?',
+                initialWisdom: '💡 "Müslüman, elinden ve dilinden diğer insanların güvende olduğu kimsedir." (Hadis-i Şerif)',
+                choices: {
+                    A: {
+                        type: 'wrong',
+                        title: 'Dışlanmamak için gülme emojisi atıp alaycı bir yorum eklemek.',
+                        sub: 'Sürü Psikolojisi • Gıybet ve Zorbalığa Ortaklık',
+                        fbTitle: '❌ SONUÇ: Kul Hakkına ve Zorbalığa Ortaklık!',
+                        fbBadge: 'Yanlış Karar • Seviye Kaybı',
+                        fbBody: 'Sadece gruba uyum sağlamak için alaya katıldığında, arkadaşının mahremiyetini çiğneyen bir haksızlığa ortak oldun. Kalabalığın yaptığı yanlış, onu doğru yapmaz.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Başkasının onurunu zedeleyen eğlenceye katılmak yerine hakkı savunan duruşu seç!'
+                    },
+                    B: {
+                        type: 'correct',
+                        title: '"Arkadaşımızın özelini paylaşmak ve alay etmek bize yakışmaz, lütfen sil" yazmak.',
+                        sub: 'Özdenetim ve Adalet • Kul Hakkını Koruma',
+                        fbTitle: '🌟 SONUÇ: Vicdanlı Duruş ve İrade Gücü!',
+                        fbBadge: 'Doğru Karar • Adalet ve Saygı',
+                        fbBody: 'Harika bir özdenetim! Kalabalığın alaycı akıntısına kapılmadın; hem gıybetten uzak durdun hem de arkadaşının mahremiyetini cesaretle ama saygılı bir dille savundun.',
+                        fbWisdom: '✅ Kazanım: Özdenetim, sadece öfkeyi tutmak değil; kalabalıkların yanlışına "dur" diyebilmektir.'
+                    },
+                    C: {
+                        type: 'warning',
+                        title: 'Gruba hiç yazmayıp ekran görüntüsünü kaydederek başka arkadaşlara göstermek.',
+                        sub: 'Gizli Yayma • Mahremiyet İhlalini Sürdürmek',
+                        fbTitle: '⚠️ SONUÇ: Yanlışı Gizlice Büyütmek!',
+                        fbBadge: 'Uygunsuz Davranış • Uyarı',
+                        fbBody: 'Grupta sessiz kalsan da görüntüyü kaydedip başkalarına göstermek, gıybeti ve mahremiyet ihlalini başka bir ortama taşımaktır. İyiliği gizleyip yanlışı yaymak sorumluluk bilincine uymaz.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Yanlışı başka bir yere taşımak yerine, bulunduğu yerde nazikçe durdurmalısın!'
+                    }
+                }
+            },
+            {
+                id: 3,
+                tag: 'AŞAMA 3 • VİCDAN VE EMEK SINAVI',
+                seenBadge: '📝 Sınav Anı',
+                narrative: '<strong>Senaryo:</strong> Çok zorlandığın bir sınavda öğretmen kısa süreliğine sınıf kapısına yönelir. Yanındaki arkadaşın, kendi cevap kâğıdını sana doğru yaklaştırıp fısıldar.',
+                simBoxTitle: '🏫 Sınıf Ortamı • Yazılı Sınav',
+                simBoxMeta: 'Öğretmen Kapıda • Son 5 Dakika',
+                simSenderName: 'Sıra Arkadaşın (Fısıldayarak)',
+                simTime: '10:38',
+                simMessage: '"Son iki soruyu boş bırakmışsın, hoca bakmıyor, benim kâğıttan hızlıca geçiriver!"',
+                simWarningLabel: '⚠️ Kolaycı hile fırsatı ve nefis imtihanı',
+                simStatusLabel: '⏳ Karar senin vicdanında',
+                replyHeader: '💎 Senin İç Sesin ve Duruşun',
+                replyText: '"Teşekkür ederim ama kendi emeğimle aldığım puan daha kıymetli." (Kâğıda hiç bakmazsın.)',
+                verseHtml: '📖 <strong>Rehber İlkemiz:</strong> "Bizi aldatan bizden değildir." <em>(Müslim, Îmân, 164 — Hadis-i Şerif)</em>',
+                promptTitle: 'Karar Mekanizması: Kimse Görmüyorken Ne Yaparsın?',
+                initialBody: 'Düşük not alma korkusuyla nefsin "Sadece iki soru, kimse görmeyecek" diye fısıldıyor. Gerçek özdenetim, kimsenin görmediği anda doğruyu seçmektir!',
+                initialWisdom: '💡 "İhsan, Allah’ı görüyormuşsun gibi kulluk etmendir; sen O’nu görmesen de O seni görür." (Hadis-i Şerif)',
+                choices: {
+                    A: {
+                        type: 'correct',
+                        title: '"Teşekkür ederim, kendi emeğimle aldığım not daha kıymetli" deyip kâğıda bakmamak.',
+                        sub: 'Özdenetim ve Dürüstlük • Helal Emek Şuuru',
+                        fbTitle: '🌟 SONUÇ: Dürüstlük Zaferi ve İç Huzur!',
+                        fbBadge: 'Doğru Karar • Emanet Şuuru',
+                        fbBody: 'Tebrikler! Sınavdaki birkaç puan uğruna karakterinden ve dürüstlüğünden ödün vermedin. Kimse görmese de vicdanının ve Allah’ın gözetimi altında olduğunu bilerek nefsine hâkim oldun.',
+                        fbWisdom: '✅ Kazanım: Gerçek başarı, başkasının kâğıdından alınan puan değil, alın teriyle kazanılan özgüvendir.'
+                    },
+                    B: {
+                        type: 'warning',
+                        title: 'Kopya çekmemek ama kendi yazdıklarının doğru olup olmadığını göz ucuyla kontrol etmek.',
+                        sub: 'Sınır İhlali • Niyeti Bulandırmak',
+                        fbTitle: '⚠️ SONUÇ: Niyeti Bulandırmak ve Kendini Kandırmak!',
+                        fbBadge: 'Nefis Tuzağı • Uyarı',
+                        fbBody: 'Buna "sadece kontrol etmek" demek nefsin bir bahanesidir. Başkasının kâğıdına bakarak kendi cevabını teyit etmek de emeğe ve sınav adaletine aykırıdır.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Şüpheli ve gri alanlardan tamamen uzak durmak özdenetimin temelidir!'
+                    },
+                    C: {
+                        type: 'wrong',
+                        title: 'Öğretmen dönmeden cevapları hızlıca kendi kâğıdına geçirmek.',
+                        sub: 'Nefse Yenilmek • Kul Hakkı ve Haksız Kazanç',
+                        fbTitle: '❌ SONUÇ: Emek Hırsızlığı ve Vicdan Yarası!',
+                        fbBadge: 'Yanlış Karar • Seviye Kaybı',
+                        fbBody: 'Kısa vadede birkaç puan kazanmış gibi görünsen de kendi emeğine ve gecesini gündüzüne katan diğer arkadaşlarının hakkına girdin. Özdenetim sınavında nefsine yenildin.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Hileyle gelen yüksek not kişiyi yüceltmez; dürüstlükten şaşmayan seçeneği işaretle!'
+                    }
+                }
+            },
+            {
+                id: 4,
+                tag: 'AŞAMA 4 • SÖZLÜ TAHRİK VE SABIR',
+                seenBadge: '⚽ Okul Bahçesi / Maç',
+                narrative: '<strong>Senaryo:</strong> Okul bahçesindeki maçta rakip takımdan bir öğrenci, senin moralini bozup oyundan düşürmek için sert bir şekilde omzuna çarpar, alaycı bir söz söyler ve arkadaşlarına dönüp güler.',
+                simBoxTitle: '🏟️ Okul Bahçesi • Teneffüs Maçı',
+                simBoxMeta: 'Tüm Arkadaşlar İzliyor',
+                simSenderName: 'Rakip Takım Oyuncusu',
+                simTime: '12:20',
+                simMessage: '"Yeteneksizsen çık kenara, sahayı boşuna meşgul etme! 😂"',
+                simWarningLabel: '⚠️ Açık tahrik ve kalabalık önünde küçük düşürme',
+                simStatusLabel: '🔥 Öfke eşiği test ediliyor',
+                replyHeader: '🌿 Senin Vakur Tepkin',
+                replyText: 'Derin bir nefes alır, sakinliğini koruyarak: "Oyun kurallar ve saygı içinde güzel, lütfen dikkatli olalım" dersin.',
+                verseHtml: '📖 <strong>Rehber İlkemiz:</strong> "Kötülüğü en güzel olan şeyle sav. O zaman görürsün ki, seninle arasında düşmanlık bulunan kimse, sanki sıcak bir dost oluvermiştir." <em>(Fussilet Suresi, 34. Ayet)</em>',
+                promptTitle: 'Karar Mekanizması: Herkesin Önünde Nasıl Davranırsın?',
+                initialBody: 'Arkadaşlarının önünde küçük düşürülmeye çalışıldın ve herkes senin vereceğin tepkiye bakıyor. Öfke mi konuşacak, yoksa olgunluğun mu?',
+                initialWisdom: '💡 "Sabır, musibetin ilk çarptığı anda gösterilen metanettir." (Hadis-i Şerif)',
+                choices: {
+                    A: {
+                        type: 'wrong',
+                        title: 'Öfkeyle dönüp aynı sertlikte onu itmek ve sert sözlerle karşılık vermek.',
+                        sub: 'Tahrike Kapılmak • Fiziksel ve Sözlü Kavga',
+                        fbTitle: '❌ SONUÇ: Tahrike Yenilmek ve Oyunu Bozmak!',
+                        fbBadge: 'Yanlış Karar • Seviye Kaybı',
+                        fbBody: 'Karşı tarafın tam da istediği tuzağa düştün! Öfkeni kontrol edemeyip itişmeye başlaman hem oyunu bozdu hem de seni haksız ve kavgacı konuma düşürdü.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Tahrik edene aynı şekilde karşılık vermek yangına körükle gitmektir. Sabırlı yolu seç!'
+                    },
+                    B: {
+                        type: 'warning',
+                        title: 'Küsüp topu yere fırlatmak ve takım arkadaşlarını sahada yalnız bırakmak.',
+                        sub: 'Duygusal Tepki • Sorumluluktan Kaçış',
+                        fbTitle: '⚠️ SONUÇ: Kontrolsüz Tepki ve Sorumsuzluk!',
+                        fbBadge: 'Duygusal Kırılma • Uyarı',
+                        fbBody: 'Şiddete başvurmasan da sinirle oyunu terk etmek, kendi takım arkadaşlarına karşı sorumluluğunu aksatmana yol açtı. Özdenetim, duyguları yönetip görevine devam edebilmektir.',
+                        fbWisdom: '🔎 Yapıcı Dönüt: Sorumluluklarını bir kişinin sözü yüzünden yarıda bırakma; vakur bir şekilde devam et!'
+                    },
+                    C: {
+                        type: 'correct',
+                        title: 'Derin bir nefes alıp "Oyun saygı içinde güzel, lütfen dikkatli olalım" diyerek oyuna devam etmek.',
+                        sub: 'Özdenetim ve Sabır • Karakter Asaleti',
+                        fbTitle: '🌟 SONUÇ: Tam Bir İrade Zaferi!',
+                        fbBadge: 'Doğru Karar • Sabır ve Vakar',
+                        fbBody: 'Muhteşem bir olgunluk! Tahrike kapılmadın, takımını yarı yolda bırakmadın ve sakin ama net bir sınır çizdin. Sahadaki herkes senin gerçek büyüklüğüne ve özdenetimine şahit oldu.',
+                        fbWisdom: '✅ Kazanım: Öfke anında nefsini frenleyebilen kişi, hem kendini hem de çevresini korur.'
+                    }
+                }
+            }
+        ];
+
+        /* =========================================================
+           OYUN DURUMU VE EKRAN YÖNETİMİ
+           ========================================================= */
+        let currentIndex = 0;
+        let willpower = 50;
+
+        const screens = {
+            intro: document.getElementById('screenIntro'),
+            game: document.getElementById('screenGame'),
+            summary: document.getElementById('screenSummary')
+        };
+
+        const authorSignature = document.getElementById('authorSignature');
+        const homeResetBtn = document.getElementById('homeResetBtn');
+        const stagePill = document.getElementById('stagePill');
+        const willpowerBar = document.getElementById('willpowerBar');
+        const willpowerText = document.getElementById('willpowerText');
+
+        const scenarioTag = document.getElementById('scenarioTag');
+        const seenBadge = document.getElementById('seenBadge');
+        const scenarioNarrativeText = document.getElementById('scenarioNarrativeText');
+        const simBoxTitle = document.getElementById('simBoxTitle');
+        const simBoxMeta = document.getElementById('simBoxMeta');
+        const simSenderName = document.getElementById('simSenderName');
+        const simTime = document.getElementById('simTime');
+        const incomingProvocationText = document.getElementById('incomingProvocationText');
+        const simWarningLabel = document.getElementById('simWarningLabel');
+        const simStatusLabel = document.getElementById('simStatusLabel');
+        const dignifiedReplyBubble = document.getElementById('dignifiedReplyBubble');
+        const replyHeader = document.getElementById('replyHeader');
+        const replyText = document.getElementById('replyText');
+        const verseFooterBox = document.getElementById('verseFooterBox');
+        const decisionPromptTitle = document.getElementById('decisionPromptTitle');
+
+        const choiceButtons = {
+            A: document.getElementById('choiceBtnA'),
+            B: document.getElementById('choiceBtnB'),
+            C: document.getElementById('choiceBtnC')
+        };
+
+        const feedbackPanel = document.getElementById('feedbackPanel');
+        const feedbackTitle = document.getElementById('feedbackTitle');
+        const feedbackBadge = document.getElementById('feedbackBadge');
+        const feedbackBody = document.getElementById('feedbackBody');
+        const feedbackWisdom = document.getElementById('feedbackWisdom');
+        const toNextBtn = document.getElementById('toNextBtn');
+        const nextBtnText = document.getElementById('nextBtnText');
+        const victorySubtitle = document.getElementById('victorySubtitle');
+
+        function showScreen(screenKey) {
+            Object.keys(screens).forEach(key => {
+                screens[key].classList.toggle('active', key === screenKey);
+            });
+
+            // KURAL 5: "Hazırlayan: Ahmet ŞEN" SADECE ana ekranda (açılış ekranında) görünür,
+            // soru veya sonuç ekranlarına geçildiğinde gizlenir.
+            if (screenKey === 'intro') {
+                authorSignature.style.display = 'block';
+                homeResetBtn.style.display = 'none';
+                stagePill.style.display = 'none';
+            } else if (screenKey === 'game') {
+                authorSignature.style.display = 'none';
+                homeResetBtn.style.display = 'inline-flex';
+                stagePill.style.display = 'inline-flex';
+            } else {
+                authorSignature.style.display = 'none';
+                homeResetBtn.style.display = 'inline-flex';
+                stagePill.style.display = 'none';
+            }
+        }
+
+        function updateWillpowerMeter(newVal, color) {
+            willpower = Math.max(10, Math.min(100, newVal));
+            willpowerBar.style.width = willpower + '%';
+            willpowerBar.style.backgroundColor = color;
+            willpowerText.textContent = willpower + '%';
+        }
+
+        function loadScenario(index) {
+            currentIndex = index;
+            const s = SCENARIOS[index];
+
+            stagePill.textContent = `Aşama ${index + 1} / ${SCENARIOS.length}`;
+            scenarioTag.textContent = s.tag;
+            seenBadge.textContent = s.seenBadge;
+            scenarioNarrativeText.innerHTML = s.narrative;
+            simBoxTitle.textContent = s.simBoxTitle;
+            simBoxMeta.textContent = s.simBoxMeta;
+            simSenderName.textContent = s.simSenderName;
+            simTime.textContent = s.simTime;
+            incomingProvocationText.textContent = s.simMessage;
+            simWarningLabel.textContent = s.simWarningLabel;
+            simStatusLabel.textContent = s.simStatusLabel;
+            replyHeader.textContent = s.replyHeader;
+            replyText.textContent = s.replyText;
+            verseFooterBox.innerHTML = s.verseHtml;
+            decisionPromptTitle.textContent = s.promptTitle;
+
+            ['A', 'B', 'C'].forEach(key => {
+                document.getElementById(`choiceTitle${key}`).textContent = s.choices[key].title;
+                document.getElementById(`choiceSub${key}`).textContent = s.choices[key].sub;
+                choiceButtons[key].classList.remove('state-wrong', 'state-warning', 'state-correct');
+            });
+
+            feedbackPanel.classList.remove('tone-wrong', 'tone-warning', 'tone-correct');
+            feedbackTitle.textContent = '🧭 Karar Analizi Bekleniyor';
+            feedbackBadge.textContent = `Aşama ${index + 1} / ${SCENARIOS.length}`;
+            feedbackBody.textContent = s.initialBody;
+            feedbackWisdom.textContent = s.initialWisdom;
+            dignifiedReplyBubble.classList.remove('visible');
+            toNextBtn.classList.remove('visible');
+
+            if (index === SCENARIOS.length - 1) {
+                nextBtnText.textContent = 'İRADE ZAFERİ ÖZETİ';
+            } else {
+                nextBtnText.textContent = `SONRAKİ SENARYO (${index + 2}/${SCENARIOS.length})`;
+            }
+        }
+
+        function handleDecision(choiceKey) {
+            const s = SCENARIOS[currentIndex];
+            const choice = s.choices[choiceKey];
+
+            feedbackPanel.classList.remove('tone-wrong', 'tone-warning', 'tone-correct');
+
+            if (choice.type === 'wrong') {
+                sound.playWrong();
+                choiceButtons[choiceKey].classList.add('state-wrong');
+                feedbackPanel.classList.add('tone-wrong');
+                dignifiedReplyBubble.classList.remove('visible');
+                updateWillpowerMeter(willpower - 15, '#F43F5E');
+            } else if (choice.type === 'warning') {
+                sound.playWarning();
+                choiceButtons[choiceKey].classList.add('state-warning');
+                feedbackPanel.classList.add('tone-warning');
+                dignifiedReplyBubble.classList.remove('visible');
+                updateWillpowerMeter(willpower - 8, '#F59E0B');
+            } else if (choice.type === 'correct') {
+                sound.playSuccess();
+                choiceButtons[choiceKey].classList.add('state-correct');
+                feedbackPanel.classList.add('tone-correct');
+                dignifiedReplyBubble.classList.add('visible');
+                toNextBtn.classList.add('visible');
+                updateWillpowerMeter(Math.min(100, willpower + 15), '#10B981');
+            }
+
+            feedbackTitle.textContent = choice.fbTitle;
+            feedbackBadge.textContent = choice.fbBadge;
+            feedbackBody.textContent = choice.fbBody;
+            feedbackWisdom.textContent = choice.fbWisdom;
+        }
+
+        function startNewGame() {
+            updateWillpowerMeter(50, '#38BDF8');
+            loadScenario(0);
+            showScreen('game');
+        }
+
+        /* =========================================================
+           ETKİLEŞİM DİNLEYİCİLERİ
+           ========================================================= */
+        document.getElementById('startScenarioBtn').addEventListener('click', () => {
+            sound.playClick();
+            startNewGame();
+        });
+
+        homeResetBtn.addEventListener('click', () => {
+            sound.playClick();
+            updateWillpowerMeter(50, '#38BDF8');
+            showScreen('intro');
+        });
+
+        toNextBtn.addEventListener('click', () => {
+            sound.playClick();
+            if (currentIndex < SCENARIOS.length - 1) {
+                loadScenario(currentIndex + 1);
+            } else {
+                victorySubtitle.textContent = `4 Aşamalı Özdenetim (Nefis Terbiyesi) Sınavını %${willpower} İrade Seviyesiyle Tamamladın!`;
+                showScreen('summary');
+            }
+        });
+
+        document.getElementById('replayScenarioBtn').addEventListener('click', () => {
+            sound.playClick();
+            startNewGame();
+        });
+
+        Object.keys(choiceButtons).forEach(key => {
+            choiceButtons[key].addEventListener('click', () => {
+                handleDecision(key);
+            });
+        });
+
+        document.getElementById('soundToggleBtn').addEventListener('click', () => {
+            sound.enabled = !sound.enabled;
+            document.getElementById('soundIcon').textContent = sound.enabled ? '🔊' : '🔇';
+            document.getElementById('soundLabel').textContent = sound.enabled ? 'Ses Açık' : 'Ses Kapalı';
+            if (sound.enabled) {
+                sound.playClick();
+            }
+        });
+    
+
+    /* ========================================================================
+       MAARİFİN KALBİNDE OYUN: KATILIM MODU & 2-10 GRUP YARIŞMASI STANDARDI
+       ======================================================================== */
+    (function initMaarif2To10GroupStandard() {
+      // Eğer sayfada zaten yerel #tab-individual ve #input-group-count varsa sadece 2-10 sınırını garanti et
+      if (document.getElementById('tab-individual') && document.getElementById('input-group-count')) {
+        const inp = document.getElementById('input-group-count');
+        inp.min = '2';
+        inp.max = '10';
+        return;
+      }
+
+      const gState = {
+        playType: 'individual', // 'individual' | 'groups'
+        groupCount: 2,
+        groups: [
+          { id: 1, name: '1. Grup', score: 0, step: 0 },
+          { id: 2, name: '2. Grup', score: 0, step: 0 }
+        ],
+        activeGroupIndex: 0,
+        lastObservedScore: 0,
+        scoredThisQuestion: false
+      };
+
+      function escapeHtmlSafe(str) {
+        return String(str || '').replace(/[&<>"']/g, m => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+      }
+
+      function syncGroupsCount(newCount) {
+        const parsed = parseInt(newCount, 10);
+        const clamped = Number.isNaN(parsed) ? 2 : Math.max(2, Math.min(10, parsed));
+        gState.groupCount = clamped;
+        const inp = document.getElementById('input-group-count');
+        if (inp) inp.value = String(clamped);
+
+        while (gState.groups.length < clamped) {
+          const nextNum = gState.groups.length + 1;
+          gState.groups.push({ id: nextNum, name: `${nextNum}. Grup`, score: 0, step: 0 });
+        }
+        if (gState.groups.length > clamped) {
+          gState.groups.length = clamped;
+        }
+        renderGroupSetupInputs();
+        syncToNativeGroupEngineIfPresent();
+      }
+
+      function renderGroupSetupInputs() {
+        const container = document.getElementById('group-names-container');
+        if (!container) return;
+        container.innerHTML = '';
+        gState.groups.forEach((grp, idx) => {
+          const inp = document.createElement('input');
+          inp.type = 'text';
+          inp.className = 'group-name-input';
+          inp.value = grp.name;
+          inp.placeholder = `${idx + 1}. Grup`;
+          inp.setAttribute('aria-label', `${idx + 1}. Grup Adı`);
+          inp.addEventListener('input', () => {
+            const val = inp.value.trim();
+            grp.name = val || `${idx + 1}. Grup`;
+            syncToNativeGroupEngineIfPresent();
+          });
+          inp.addEventListener('blur', () => {
+            if (!inp.value.trim()) {
+              grp.name = `${idx + 1}. Grup`;
+              inp.value = grp.name;
+              syncToNativeGroupEngineIfPresent();
+            }
+          });
+          container.appendChild(inp);
+        });
+      }
+
+      function getNativeSetupGrid() {
+        return document.getElementById('group-inputs-grid')
+          || document.getElementById('groups-input-grid')
+          || document.getElementById('groupInputsGrid')
+          || document.getElementById('group-inputs-list');
+      }
+
+      function syncToNativeGroupEngineIfPresent() {
+        if (gState.playType !== 'groups') return;
+        const count = gState.groups.length;
+        try { if (typeof State !== 'undefined' && State) State.groupCount = count; } catch (e) {}
+        try { if (typeof state !== 'undefined' && state) state.groupCount = count; } catch (e) {}
+        try { if (typeof selectedGroupCount !== 'undefined') selectedGroupCount = count; } catch (e) {}
+        try { if (typeof groupCount !== 'undefined') groupCount = count; } catch (e) {}
+        try {
+          if (typeof customGroupNames !== 'undefined' && Array.isArray(customGroupNames)) {
+            customGroupNames.length = 0;
+            gState.groups.forEach(g => customGroupNames.push(g.name));
+          }
+        } catch (e) {}
+
+        const nativeGrid = getNativeSetupGrid();
+        if (nativeGrid) {
+          nativeGrid.innerHTML = '';
+          gState.groups.forEach((g, idx) => {
+            const wrap = document.createElement('div');
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.className = 'group-name-input';
+            inp.value = g.name;
+            inp.dataset.groupIdx = String(idx);
+            wrap.appendChild(inp);
+            nativeGrid.appendChild(wrap);
+          });
+        }
+      }
+
+      function setPlayType(type) {
+        gState.playType = type;
+        const isGroups = type === 'groups';
+        const tabInd = document.getElementById('tab-individual');
+        const tabGrp = document.getElementById('tab-groups');
+        const panel = document.getElementById('group-setup-panel');
+        if (tabInd) {
+          tabInd.classList.toggle('selected', !isGroups);
+          tabInd.setAttribute('aria-pressed', String(!isGroups));
+        }
+        if (tabGrp) {
+          tabGrp.classList.toggle('selected', isGroups);
+          tabGrp.setAttribute('aria-pressed', String(isGroups));
+        }
+        if (panel) panel.hidden = !isGroups;
+
+        // Eğer dosyada önceki bireysel/grup butonları varsa senkronize et
+        const oldBtnG = document.getElementById('btn-mode-group');
+        const oldBtnI = document.getElementById('btn-mode-individual');
+        if (isGroups && oldBtnG) oldBtnG.click();
+        if (!isGroups && oldBtnI) oldBtnI.click();
+
+        if (isGroups) {
+          syncGroupsCount(gState.groupCount);
+        }
+        renderGroupsScoreboard();
+      }
+
+      function renderGroupsScoreboard() {
+        const strip = document.getElementById('groups-scoreboard-strip');
+        if (!strip) return;
+        if (gState.playType !== 'groups') {
+          strip.hidden = true;
+          return;
+        }
+        strip.hidden = false;
+        const activeGroup = gState.groups[gState.activeGroupIndex] || gState.groups[0];
+        const turnText = document.getElementById('group-turn-text');
+        if (activeGroup && turnText) {
+          turnText.textContent = `Sıra: ${activeGroup.name}`;
+        }
+
+        const row = document.getElementById('groups-cards-row');
+        if (!row) return;
+        row.innerHTML = '';
+        gState.groups.forEach((grp, idx) => {
+          const card = document.createElement('div');
+          const isTurn = idx === gState.activeGroupIndex;
+          card.className = `group-score-card ${isTurn ? 'active-turn' : ''}`;
+          card.innerHTML = `
+            <span class="group-card-name">${isTurn ? '▶ ' : ''}${escapeHtmlSafe(grp.name)}</span>
+            <span class="group-card-pts">${grp.score} Puan (${grp.step} Adım)</span>
+          `;
+          row.appendChild(card);
+        });
+      }
+
+      function advanceGroupTurn() {
+        if (gState.playType !== 'groups' || gState.groups.length === 0) return;
+        gState.activeGroupIndex = (gState.activeGroupIndex + 1) % gState.groups.length;
+        gState.scoredThisQuestion = false;
+        renderGroupsScoreboard();
+      }
+
+      function readCurrentGameTotalScore() {
+        try { if (typeof state !== 'undefined' && state && typeof state.totalScore === 'number') return state.totalScore; } catch (e) {}
+        try { if (typeof state !== 'undefined' && state && typeof state.score === 'number') return state.score; } catch (e) {}
+        try { if (typeof State !== 'undefined' && State && typeof State.score === 'number') return State.score; } catch (e) {}
+        try { if (typeof score === 'number') return score; } catch (e) {}
+        try { if (typeof totalScore === 'number') return totalScore; } catch (e) {}
+        const scoreEl = document.querySelector('#total-score-box, #score-display, #score, #hud-score, #current-score, #stat-score, #scoreVal, #score-val, [id*="score"]');
+        if (scoreEl) {
+          const m = (scoreEl.textContent || '').match(/-?\d+/);
+          if (m) return parseInt(m[0], 10);
+        }
+        return null;
+      }
+
+      function renderEndOfGameGroupRanking(targetContainer) {
+        if (gState.playType !== 'groups' || gState.groups.length === 0 || !targetContainer) return;
+        let box = targetContainer.querySelector('#maarif-group-result-box');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'maarif-group-result-box';
+          box.className = 'maarif-group-result-box';
+          targetContainer.appendChild(box);
+        }
+
+        const sortedGroups = [...gState.groups].sort((a, b) => (b.score - a.score) || (b.step - a.step));
+        box.innerHTML = '';
+        sortedGroups.forEach((grp, idx) => {
+          const row = document.createElement('div');
+          const isWinner = idx === 0;
+          row.className = `maarif-leader-row ${isWinner ? 'top-1' : ''}`;
+          const medal = idx === 0 ? '🥇 1.' : idx === 1 ? '🥈 2.' : idx === 2 ? '🥉 3.' : `${idx + 1}.`;
+          const badge = isWinner ? ' 🏆 BİRİNCİ GRUP' : '';
+          row.innerHTML = `
+            <span>${medal} ${escapeHtmlSafe(grp.name)}${badge}</span>
+            <span>${grp.score} Puan (${grp.step} Adım)</span>
+          `;
+          box.appendChild(row);
+        });
+      }
+
+      function mountStandardUI() {
+        if (document.getElementById('tab-groups')) return;
+
+        // 1. Giriş ekranındaki başlat butonunu veya kurulum kartını bul
+        const startBtn = document.querySelector(
+          '#btn-start-game, #startGameBtn, #btn-start-competition, #start-btn, #startBtn, [onclick*="startGame"], [onclick*="startCompetition"], [onclick*="startNewGame"], .btn-hero, button[id*="start" i]'
+        );
+        const homeScreen = document.querySelector(
+          '#screen-home, #home-screen, #homeScreen, #screenHome, #screen-start, #start-screen, #startScreen, #screen-setup, #setup-screen, #setupScreen, #intro-screen, #introScreen, #gradeSelectionScreen, #screen-menu, section.active, .screen.active'
+        );
+
+        const playTypeBox = document.createElement('div');
+        playTypeBox.className = 'play-type-box';
+        playTypeBox.setAttribute('aria-label', 'Oyun Katılım Türü ve Grup Ayarları');
+        playTypeBox.innerHTML = `
+          <div class="play-type-top">
+            <span style="font-weight: 900; font-size: clamp(0.88rem, 1.08vw, 1.22rem); color: #fbbf24;">
+              🎮 Katılım Modu Seçin:
+            </span>
+            <div class="play-type-tabs" role="radiogroup" aria-label="Bireysel veya Çoklu Grup">
+              <button type="button" class="play-tab-btn selected" id="tab-individual" aria-pressed="true">
+                👤 Bireysel / Sınıfça
+              </button>
+              <button type="button" class="play-tab-btn" id="tab-groups" aria-pressed="false">
+                🏆 Çoklu Grup Yarışması (2-10 Grup)
+              </button>
+            </div>
+          </div>
+
+          <div class="group-setup-panel" id="group-setup-panel" hidden>
+            <div class="group-count-row">
+              <label for="input-group-count">Grup Sayısı (2 - 10):</label>
+              <div class="group-counter-controls">
+                <button type="button" class="qty-btn" id="btn-group-minus" aria-label="Grup Sayısını Azalt">−</button>
+                <input type="number" class="group-count-input" id="input-group-count" min="2" max="10" value="2" />
+                <button type="button" class="qty-btn" id="btn-group-plus" aria-label="Grup Sayısını Artır">+</button>
+              </div>
+              <span style="font-size: clamp(0.76rem, 0.92vw, 1.04rem); color: #cbd5e1; font-weight: 700;">
+                (Grup isimlerine tıklayarak düzenleyebilirsiniz)
+              </span>
+            </div>
+            <div class="group-names-grid" id="group-names-container" aria-label="Grup İsimleri"></div>
+          </div>
+        `;
+
+        const nativeGrid = getNativeSetupGrid();
+        if (nativeGrid && nativeGrid.parentElement) {
+          nativeGrid.parentElement.insertBefore(playTypeBox, nativeGrid);
+        } else if (startBtn && startBtn.parentElement) {
+          startBtn.parentElement.parentElement.insertBefore(playTypeBox, startBtn.parentElement);
+        } else if (homeScreen) {
+          homeScreen.appendChild(playTypeBox);
+        }
+
+        // 2. Oyun ekranına #groups-scoreboard-strip yerleştir
+        const gameScreen = document.querySelector(
+          '#screen-game, #game-screen, #gameScreen, #screenGame, #quiz-screen, #quizScreen, #gamePlayScreen, [id*="game-screen"], [id*="screen-game"], [id*="gameScreen"]'
+        );
+        if (!document.getElementById('groups-scoreboard-strip')) {
+          const strip = document.createElement('div');
+          strip.className = 'groups-scoreboard-strip';
+          strip.id = 'groups-scoreboard-strip';
+          strip.setAttribute('aria-label', 'Grup Sıra ve Skor Tablosu');
+          strip.hidden = true;
+          strip.innerHTML = `
+            <div class="turn-indicator-badge" id="group-turn-indicator">
+              <span aria-hidden="true">🚩</span>
+              <span id="group-turn-text">Sıra: 1. Grup</span>
+            </div>
+            <div class="groups-cards-row" id="groups-cards-row"></div>
+          `;
+          if (gameScreen) {
+            const firstHeader = gameScreen.querySelector('header, .top-bar, .status-strip');
+            if (firstHeader && firstHeader.nextSibling) {
+              firstHeader.parentElement.insertBefore(strip, firstHeader.nextSibling);
+            } else {
+              gameScreen.insertBefore(strip, gameScreen.firstChild);
+            }
+          } else {
+            document.body.insertBefore(strip, document.body.firstChild);
+          }
+        }
+
+        // Olay Dinleyicileri
+        document.getElementById('tab-individual').addEventListener('click', () => setPlayType('individual'));
+        document.getElementById('tab-groups').addEventListener('click', () => setPlayType('groups'));
+
+        document.getElementById('btn-group-minus').addEventListener('click', () => {
+          syncGroupsCount(gState.groupCount - 1);
+        });
+        document.getElementById('btn-group-plus').addEventListener('click', () => {
+          syncGroupsCount(gState.groupCount + 1);
+        });
+        document.getElementById('input-group-count').addEventListener('input', (e) => {
+          const val = parseInt(e.target.value, 10);
+          if (!Number.isNaN(val) && val >= 2 && val <= 10) {
+            syncGroupsCount(val);
+          }
+        });
+        document.getElementById('input-group-count').addEventListener('change', (e) => {
+          syncGroupsCount(e.target.value);
+        });
+
+        renderGroupSetupInputs();
+
+        // Oyun başlatıldığında grupları sıfırla ve 1. gruptan başlat
+        document.addEventListener('click', (e) => {
+          const btn = e.target.closest(
+            '#btn-start-game, #startGameBtn, #btn-start-competition, #start-btn, #startBtn, [onclick*="startGame"], [onclick*="startCompetition"], [onclick*="startNewGame"], button[id*="start" i]'
+          );
+          if (btn && gState.playType === 'groups') {
+            syncGroupsCount(document.getElementById('input-group-count').value);
+            gState.groups.forEach((g, idx) => {
+              g.name = (g.name || '').trim() || `${idx + 1}. Grup`;
+              g.score = 0;
+              g.step = 0;
+            });
+            gState.activeGroupIndex = 0;
+            gState.scoredThisQuestion = false;
+            gState.lastObservedScore = readCurrentGameTotalScore() || 0;
+            syncToNativeGroupEngineIfPresent();
+            renderGroupsScoreboard();
+          }
+        }, true);
+
+        // Cevap ve Sonraki Soru tıklamalarını takip et
+        document.addEventListener('click', (e) => {
+          if (gState.playType !== 'groups') return;
+
+          // Sonraki soru/adım butonuna tıklandığında sırayı otomatik sonraki gruba devret
+          const nextBtn = e.target.closest(
+            '#btn-next-question, #btn-next, #nextQuestionBtn, #next-btn, [id*="next"], [onclick*="next"]'
+          );
+          if (nextBtn) {
+            setTimeout(() => {
+              gState.lastObservedScore = readCurrentGameTotalScore() || gState.lastObservedScore;
+              advanceGroupTurn();
+            }, 80);
+            return;
+          }
+
+          // Doğru cevap verildiğinde puan artışını aktif gruba işle
+          setTimeout(() => {
+            const currentTotal = readCurrentGameTotalScore();
+            if (currentTotal !== null && currentTotal > gState.lastObservedScore) {
+              const delta = currentTotal - gState.lastObservedScore;
+              gState.lastObservedScore = currentTotal;
+              const activeGrp = gState.groups[gState.activeGroupIndex];
+              if (activeGrp) {
+                activeGrp.score += delta;
+                activeGrp.step += 1;
+                gState.scoredThisQuestion = true;
+                renderGroupsScoreboard();
+              }
+            }
+          }, 120);
+        });
+
+        // Sonuç ekranı açıldığında 🥇 1. [Grup Adı] 🏆 BİRİNCİ GRUP sıralamasını göster
+        const resultScreens = document.querySelectorAll(
+          '#screen-result, #result-screen, #screen-podium, #screen-summary, #end-screen, [id*="result"]'
+        );
+        const observer = new MutationObserver(() => {
+          if (gState.playType !== 'groups') return;
+          resultScreens.forEach(rs => {
+            const isVisible = rs.classList.contains('active') || (!rs.classList.contains('hidden') && rs.offsetParent !== null);
+            if (isVisible) {
+              const card = rs.querySelector('.result-card, .podium-card, .summary-card') || rs;
+              renderEndOfGameGroupRanking(card);
+            }
+          });
+        });
+        resultScreens.forEach(rs => {
+          observer.observe(rs, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountStandardUI);
+      } else {
+        mountStandardUI();
+      }
+    })();
+
+  
+
+    
+
+  
+
+    /* ========================================================================
+       ANA SAYFA (KARŞILAMA EKRANI) SIFIR TAŞMA VE OTOMATİK SIĞDIRMA MOTORU V2
+       ======================================================================== */
+    (function initHomeScreenZeroOverflowEngineV2() {
+      const HOME_SELECTORS = [
+        '#screen-home', '#home-screen', '#homeScreen', '#screenHome',
+        '#screen-start', '#start-screen', '#startScreen', '#screenStart',
+        '#screen-setup', '#setup-screen', '#setupScreen', '#screenSetup',
+        '#intro-screen', '#introScreen', '#welcome-screen', '#welcomeScreen',
+        '#gradeSelectionScreen', '#screen-menu', '#menuScreen'
+      ];
+
+      const GAME_OR_RESULT_IDS = new Set([
+        'screen-game', 'game-screen', 'gameScreen', 'screenGame', 'quiz-screen', 'quizScreen', 'gamePlayScreen',
+        'screen-result', 'result-screen', 'resultScreen', 'screenResult', 'screen-podium', 'screen-summary', 'end-screen'
+      ]);
+
+      let cachedInitialHome = null;
+
+      function isVisible(el) {
+        if (!el || el.nodeType !== 1) return false;
+        const st = window.getComputedStyle(el);
+        if (st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity) === 0) return false;
+        if (el.classList.contains('hidden') || el.hasAttribute('hidden')) return false;
+        return el.offsetWidth > 0 && el.offsetHeight > 0;
+      }
+
+      function getActiveHomeScreen() {
+        for (const sel of HOME_SELECTORS) {
+          const el = document.querySelector(sel);
+          if (el && isVisible(el)) return el;
+        }
+        if (cachedInitialHome && isVisible(cachedInitialHome)) {
+          return cachedInitialHome;
+        }
+        const startBtn = document.querySelector(
+          '#btn-start-game, #startGameBtn, #btn-start-competition, #start-btn, #startBtn, [onclick*="startGame"], [onclick*="startCompetition"], [onclick*="startNewGame"], .btn-hero, button[id*="start" i]'
+        );
+        if (startBtn && isVisible(startBtn)) {
+          const sec = startBtn.closest('section, .screen, [id*="screen" i], [id*="home" i], [id*="start" i], main');
+          if (sec && !GAME_OR_RESULT_IDS.has(sec.id) && isVisible(sec)) {
+            cachedInitialHome = sec;
+            return sec;
+          }
+        }
+        const activeScreen = document.querySelector('.screen.active, section.active');
+        if (activeScreen && !GAME_OR_RESULT_IDS.has(activeScreen.id) && isVisible(activeScreen)) {
+          cachedInitialHome = activeScreen;
+          return activeScreen;
+        }
+        return null;
+      }
+
+      const SCROLLABLE_ALLOW_IDS = new Set([
+        'group-names-container', 'bireysel-student-chips', 'bireysel-bulk-input', 'bireysel-setup-panel'
+      ]);
+
+      function getOverflowingElements(home) {
+        const list = [];
+        const vh = window.innerHeight || 1080;
+
+        if (document.documentElement.scrollHeight > vh + 3 || document.body.scrollHeight > vh + 3) {
+          list.push(home);
+        }
+        if (home.scrollHeight > home.clientHeight + 2) {
+          list.push(home);
+        }
+
+        // Home içindeki tüm görünür kutuları kontrol et (iç scroll veya kırpılma yapan kartlar dahil)
+        const allBoxes = home.querySelectorAll('div, aside, section, main, article, ul, ol');
+        allBoxes.forEach(box => {
+          if (!isVisible(box) || SCROLLABLE_ALLOW_IDS.has(box.id)) return;
+          if (box.closest('#group-setup-panel, #bireysel-setup-panel')) return;
+          const cs = window.getComputedStyle(box);
+          // justify-content: center dikey taşmada üstteki başlığı kestiği için düzelt
+          if (cs.display.includes('flex') && cs.flexDirection === 'column' && cs.justifyContent === 'center') {
+            if (box.scrollHeight > box.clientHeight + 2) {
+              box.style.justifyContent = 'flex-start';
+            }
+          }
+          if (box.clientHeight > 20 && box.scrollHeight > box.clientHeight + 3) {
+            list.push(box);
+          }
+        });
+
+        // En alttaki buton/footer ekran dışına sarkıyor mu kontrol et
+        const bottomChecks = home.querySelectorAll(
+          'footer, .home-footer, .home-controls, .start-controls, #btn-start-game, #startGameBtn, .play-type-box'
+        );
+        bottomChecks.forEach(el => {
+          if (!isVisible(el)) return;
+          const r = el.getBoundingClientRect();
+          if (r.bottom > vh - 2) {
+            list.push(home);
+          }
+        });
+
+        return list;
+      }
+
+      function saveOriginalStyles(home) {
+        if (home.dataset.homeOrigSaved === '1') return;
+        home.dataset.homeOrigSaved = '1';
+        home.dataset.origInlineStyle = home.getAttribute('style') || '';
+        home.querySelectorAll('*').forEach(el => {
+          el.dataset.origInlineStyle = el.getAttribute('style') || '';
+        });
+      }
+
+      function restoreOriginalStyles(home) {
+        if (home.dataset.homeOrigSaved !== '1') return;
+        const restoreOne = (el) => {
+          const orig = el.dataset.origInlineStyle;
+          if (orig === undefined) return;
+          if (el.id === 'group-setup-panel') {
+            const h = el.hidden;
+            if (orig === '') el.removeAttribute('style');
+            else el.setAttribute('style', orig);
+            el.hidden = h;
+          } else {
+            if (orig === '') el.removeAttribute('style');
+            else el.setAttribute('style', orig);
+          }
+        };
+        restoreOne(home);
+        home.querySelectorAll('*').forEach(restoreOne);
+      }
+
+      function shrinkSubtreeMetrics(root, factor) {
+        const nodes = [root, ...root.querySelectorAll(
+          'h1, h2, h3, h4, p, span, li, button, label, input, div, aside, section, ol, ul'
+        )];
+        const snap = [];
+        nodes.forEach(el => {
+          if (!isVisible(el)) return;
+          const cs = window.getComputedStyle(el);
+          snap.push({
+            el,
+            fs: parseFloat(cs.fontSize) || 0,
+            pt: parseFloat(cs.paddingTop) || 0,
+            pb: parseFloat(cs.paddingBottom) || 0,
+            mt: parseFloat(cs.marginTop) || 0,
+            mb: parseFloat(cs.marginBottom) || 0,
+            rg: parseFloat(cs.rowGap) || 0,
+            cg: parseFloat(cs.columnGap) || 0
+          });
+        });
+
+        snap.forEach(s => {
+          if (s.fs > 10.5) s.el.style.fontSize = Math.max(10.5, s.fs * factor).toFixed(2) + 'px';
+          if (s.pt > 1) s.el.style.paddingTop = Math.max(1, s.pt * factor * 0.92).toFixed(2) + 'px';
+          if (s.pb > 1) s.el.style.paddingBottom = Math.max(1, s.pb * factor * 0.92).toFixed(2) + 'px';
+          if (s.mt > 1) s.el.style.marginTop = Math.max(0, s.mt * factor * 0.88).toFixed(2) + 'px';
+          if (s.mb > 1) s.el.style.marginBottom = Math.max(0, s.mb * factor * 0.88).toFixed(2) + 'px';
+          if (s.rg > 1) s.el.style.rowGap = Math.max(1, s.rg * factor * 0.88).toFixed(2) + 'px';
+          s.el.style.lineHeight = '1.2';
+        });
+      }
+
+      function fitHomeScreenToViewport() {
+        const home = getActiveHomeScreen();
+        if (!home) return;
+
+        saveOriginalStyles(home);
+        restoreOriginalStyles(home);
+
+        // 1. Tüm metinlerde yatay taşmayı engelle
+        home.querySelectorAll('h1, h2, h3, h4, p, span, button, label, div').forEach(node => {
+          node.style.maxWidth = '100%';
+          node.style.overflowWrap = 'break-word';
+        });
+
+        // 2. Genel karşılama ekranını taşma bitene kadar kademeli sıkılaştır (최대 16 adım)
+        let step = 0;
+        while (step < 16) {
+          const over = getOverflowingElements(home);
+          if (over.length === 0) break;
+          shrinkSubtreeMetrics(home, 0.92);
+          step++;
+        }
+
+        // 3. Eğer belirli bir alt kart (.hero-card, .how-to-play-card, .setup-card vb.) hâlâ taşma yapıyorsa doğrudan o kartı sığdır
+        let cardStep = 0;
+        while (cardStep < 10) {
+          const over = getOverflowingElements(home).filter(el => el !== home);
+          if (over.length === 0) break;
+          over.forEach(box => shrinkSubtreeMetrics(box, 0.90));
+          cardStep++;
+        }
+      }
+
+      function bindUnifiedTabs() {
+        const tabInd = document.getElementById('tab-individual');
+        const tabGrp = document.getElementById('tab-groups');
+        const bireyselPanel = document.getElementById('bireysel-setup-panel');
+
+        if (tabInd && tabGrp && bireyselPanel) {
+          tabInd.addEventListener('click', () => {
+            bireyselPanel.classList.add('visible');
+            scheduleFit();
+          });
+          tabGrp.addEventListener('click', () => {
+            bireyselPanel.classList.remove('visible');
+            scheduleFit();
+          });
+        }
+      }
+
+      function scheduleFit() {
+        requestAnimationFrame(() => {
+          fitHomeScreenToViewport();
+          setTimeout(fitHomeScreenToViewport, 80);
+        });
+      }
+
+      window.addEventListener('resize', scheduleFit);
+      window.addEventListener('load', scheduleFit);
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('#tab-individual, #tab-groups, #btn-group-minus, #btn-group-plus, #bireysel-add-btn, #bireysel-bulk-btn, #bireysel-clear-btn, [id*="home" i], [id*="back" i], [id*="setup" i]')) {
+          scheduleFit();
+        }
+      });
+      document.addEventListener('input', (e) => {
+        if (e.target && e.target.id === 'input-group-count') {
+          scheduleFit();
+        }
+      });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          bindUnifiedTabs();
+          scheduleFit();
+        });
+      } else {
+        bindUnifiedTabs();
+        scheduleFit();
+      }
+    })();
+
+  
+
+    /* ========================================================================
+       ÜST KONTROL ÇUBUĞU: NASIL OYNANIR (SORULARI DÜZENLE SOLUNA), ANA SAYFA & TAM EKRAN
+       ======================================================================== */
+    (function initMaarifTopbarAndHowToModal() {
+      function findTopActionsContainer() {
+        // Tüm ekranlarda görünür olan veya aktif ekranın üst çubuğundaki aksiyon alanını bul
+        const candidates = [
+          document.querySelector('body > header .top-actions'),
+          document.querySelector('body > .top-bar .top-actions'),
+          document.querySelector('.top-actions'),
+          document.querySelector('body > header'),
+          document.querySelector('body > .top-bar'),
+          document.querySelector('#screen-home header > div:last-child'),
+          document.querySelector('#screen-setup header > div:last-child'),
+          document.querySelector('.screen.active header > div:last-child'),
+          document.querySelector('header .flex.items-center'),
+          document.querySelector('.top-bar'),
+          document.querySelector('header')
+        ];
+        for (const c of candidates) {
+          if (c) return c;
+        }
+        return null;
+      }
+
+      function getButtonClassFromBar(bar) {
+        if (!bar) return 'maarif-top-btn';
+        const sampleBtn = bar.querySelector('button:not(.count-btn):not(.play-tab-btn)');
+        if (sampleBtn && sampleBtn.className) {
+          return sampleBtn.className.replace(/\bgold\b|\bbtn-danger\b|\bbtn-primary\b/g, '').trim() || 'maarif-top-btn';
+        }
+        return 'maarif-top-btn';
+      }
+
+      function buildHowToModalContent() {
+        // 1. Eğer sayfada sol tarafta açık duran .how-to-play-card veya benzeri bir kart varsa içeriğini al ve kartı gizle
+        const openCard = document.querySelector('.how-to-play-card, aside[aria-label*="Nasıl" i]');
+        if (openCard) {
+          const clone = openCard.cloneNode(true);
+          const titleEl = clone.querySelector('.how-to-play-title, h2, h3');
+          if (titleEl) titleEl.remove();
+          openCard.style.display = 'none';
+          const parentGrid = openCard.closest('.home-grid');
+          if (parentGrid) parentGrid.style.gridTemplateColumns = '1fr';
+          return clone.innerHTML;
+        }
+
+        // 2. Varsayılan zengin "Nasıl Oynanır?" yönergesi
+        const pageTitle = (document.title || 'Maarifin Kalbinde Oyun').split('|')[0].trim();
+        return `
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="padding:12px 14px;border-radius:12px;background:rgba(30,41,59,0.75);border:1px solid rgba(251,191,36,0.35);">
+              <strong style="color:#fbbf24;">1. Katılım Modu Seçimi:</strong>
+              <p style="margin:4px 0 0;">Giriş ekranından <strong>👤 Bireysel / Sınıfça</strong> veya <strong>🏆 Çoklu Grup Yarışması (2-10 Grup)</strong> modlarından birini seçin.</p>
+            </div>
+            <div style="padding:12px 14px;border-radius:12px;background:rgba(30,41,59,0.75);border:1px solid rgba(251,191,36,0.35);">
+              <strong style="color:#fbbf24;">2. Öğrenci Seçimi ve Grup Sırası:</strong>
+              <p style="margin:4px 0 0;">Bireysel modda akıllı kura ile her öğrenci adil şekilde tahtaya davet edilir. Grup modunda sıra her soruda otomatik olarak bir sonraki gruba geçer.</p>
+            </div>
+            <div style="padding:12px 14px;border-radius:12px;background:rgba(30,41,59,0.75);border:1px solid rgba(251,191,36,0.35);">
+              <strong style="color:#fbbf24;">3. Süreç Odaklı Öğrenme (${pageTitle}):</strong>
+              <p style="margin:4px 0 0;">Soruları dikkatle okuyarak doğru cevabı seçin. Yanlış cevaplarda yapıcı dönüt ve ipuçlarıyla doğru bilgiyi keşfederek ilerleyin.</p>
+            </div>
+          </div>
+        `;
+      }
+
+      function ensureHowToModal() {
+        let backdrop = document.getElementById('maarif-howto-backdrop');
+        if (backdrop) return backdrop;
+
+        const bodyHtml = buildHowToModalContent();
+        backdrop = document.createElement('div');
+        backdrop.id = 'maarif-howto-backdrop';
+        backdrop.className = 'maarif-howto-backdrop';
+        backdrop.innerHTML = `
+          <div class="maarif-howto-modal" role="dialog" aria-modal="true" aria-label="Nasıl Oynanır?">
+            <div class="maarif-howto-header">
+              <h3>📖 Nasıl Oynanır?</h3>
+              <button type="button" class="maarif-howto-close" id="maarif-howto-close-btn">✕ Kapat</button>
+            </div>
+            <div class="maarif-howto-body">${bodyHtml}</div>
+          </div>
+        `;
+        document.body.appendChild(backdrop);
+
+        document.getElementById('maarif-howto-close-btn').addEventListener('click', () => {
+          backdrop.classList.remove('open');
+        });
+        backdrop.addEventListener('click', (e) => {
+          if (e.target === backdrop) backdrop.classList.remove('open');
+        });
+        return backdrop;
+      }
+
+      function goToHomeScreen() {
+        // 1. Eğer sayfada mevcut bir Ana Sayfa / Kuruluma Dön butonu varsa ve görünür/aktifse veya geri dönüş fonksiyonu varsa tetikle
+        if (typeof showScreen === 'function') {
+          try {
+            showScreen('home');
+            const homeEl = document.getElementById('screen-home') || document.getElementById('homeScreen') || document.getElementById('screen-setup');
+            if (homeEl && (homeEl.classList.contains('active') || !homeEl.classList.contains('hidden'))) return;
+          } catch (e) {}
+          try {
+            showScreen('setup');
+            const setupEl = document.getElementById('screen-setup');
+            if (setupEl && setupEl.classList.contains('active')) return;
+          } catch (e) {}
+        }
+
+        const homeTargets = [
+          '#screen-home', '#home-screen', '#homeScreen', '#screenHome',
+          '#screen-start', '#start-screen', '#startScreen', '#screenStart',
+          '#screen-setup', '#setup-screen', '#setupScreen', '#screenSetup',
+          '#intro-screen', '#introScreen', '#welcome-screen', '#welcomeScreen',
+          '#gradeSelectionScreen', '#screen-menu', '#menuScreen'
+        ];
+        let foundHome = null;
+        for (const sel of homeTargets) {
+          const el = document.querySelector(sel);
+          if (el) {
+            foundHome = el;
+            break;
+          }
+        }
+
+        if (foundHome) {
+          document.querySelectorAll('.screen, section[id*="screen" i], div[id*="screen" i], section[id*="Screen"]').forEach(sc => {
+            if (sc === foundHome) {
+              sc.classList.add('active');
+              sc.classList.remove('hidden');
+              sc.removeAttribute('hidden');
+              if (sc.style.display === 'none') sc.style.display = '';
+            } else {
+              sc.classList.remove('active');
+              if (sc.id && (sc.id.toLowerCase().includes('game') || sc.id.toLowerCase().includes('result') || sc.id.toLowerCase().includes('podium') || sc.id.toLowerCase().includes('quiz') || sc.id.toLowerCase().includes('summary'))) {
+                sc.classList.add('hidden');
+              }
+            }
+          });
+          window.dispatchEvent(new Event('resize'));
+        } else {
+          window.location.reload();
+        }
+      }
+
+      function toggleFullscreen(btn) {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().then(() => {
+            if (btn) btn.innerHTML = '🗗 Küçült';
+          }).catch(() => {});
+        } else {
+          document.exitFullscreen().then(() => {
+            if (btn) btn.innerHTML = '⛶ Tam Ekran';
+          }).catch(() => {});
+        }
+      }
+
+      function mountTopbarButtons() {
+        const backdrop = ensureHowToModal();
+        const bar = findTopActionsContainer();
+        if (!bar) return;
+
+        const btnClass = getButtonClassFromBar(bar);
+
+        // Mevcut butonları kontrol et
+        const allBtns = Array.from(document.querySelectorAll('header button, .top-bar button, .top-actions button'));
+        const editQuestionsBtn = allBtns.find(b => /Soruları Düzenle/i.test(b.textContent || '') || b.id === 'openQuestionsBtn');
+        let existingHowToBtn = allBtns.find(b => /Nasıl Oynanır/i.test(b.textContent || '') || /how-to|howto/i.test(b.id || ''));
+        let existingHomeBtn = allBtns.find(b => /Ana Sayfa|Ana Ekran|Kuruluma Dön|Girişe Dön/i.test(b.textContent || '') || /home|back-home/i.test(b.id || ''));
+        let existingFsBtn = allBtns.find(b => /Tam Ekran|Fullscreen/i.test(b.textContent || '') || /fullscreen|fs-btn/i.test(b.id || '') || /Fullscreen/i.test(b.getAttribute('onclick') || '') || /Tam Ekran/i.test(b.getAttribute('title') || '') || /Tam Ekran/i.test(b.getAttribute('aria-label') || ''));
+
+        // 1. "📖 Nasıl Oynanır?" butonu: yoksa oluştur, "Soruları Düzenle" varsa tam soluna yerleştir
+        if (!existingHowToBtn) {
+          const howToBtn = document.createElement('button');
+          howToBtn.type = 'button';
+          howToBtn.id = 'maarif-top-howto-btn';
+          howToBtn.className = btnClass;
+          howToBtn.innerHTML = '📖 Nasıl Oynanır?';
+          howToBtn.addEventListener('click', () => {
+            backdrop.classList.add('open');
+          });
+          if (editQuestionsBtn && editQuestionsBtn.parentElement) {
+            editQuestionsBtn.parentElement.insertBefore(howToBtn, editQuestionsBtn);
+          } else {
+            bar.insertBefore(howToBtn, bar.firstChild);
+          }
+          existingHowToBtn = howToBtn;
+        } else if (editQuestionsBtn && editQuestionsBtn.parentElement === existingHowToBtn.parentElement) {
+          // Zaten varsa bile Soruları Düzenle'nin solunda olduğundan emin ol
+          editQuestionsBtn.parentElement.insertBefore(existingHowToBtn, editQuestionsBtn);
+        }
+
+        // 2. "🏠 Ana Sayfa" butonu: yoksa oluştur
+        if (!existingHomeBtn) {
+          const homeBtn = document.createElement('button');
+          homeBtn.type = 'button';
+          homeBtn.id = 'maarif-top-home-btn';
+          homeBtn.className = btnClass;
+          homeBtn.innerHTML = '🏠 Ana Sayfa';
+          homeBtn.addEventListener('click', goToHomeScreen);
+          bar.appendChild(homeBtn);
+          existingHomeBtn = homeBtn;
+        }
+
+        // 3. "⛶ Tam Ekran" butonu: yoksa oluştur ve Ana Sayfa butonunun hemen yanına yerleştir
+        if (!existingFsBtn) {
+          const fsBtn = document.createElement('button');
+          fsBtn.type = 'button';
+          fsBtn.id = 'maarif-top-fullscreen-btn';
+          fsBtn.className = btnClass;
+          fsBtn.innerHTML = '⛶ Tam Ekran';
+          fsBtn.setAttribute('aria-label', 'Tam Ekran');
+          fsBtn.addEventListener('click', () => toggleFullscreen(fsBtn));
+          document.addEventListener('fullscreenchange', () => {
+            fsBtn.innerHTML = document.fullscreenElement ? '🗗 Küçült' : '⛶ Tam Ekran';
+          });
+
+          if (existingHomeBtn && existingHomeBtn.parentElement) {
+            existingHomeBtn.parentElement.insertBefore(fsBtn, existingHomeBtn.nextSibling);
+          } else {
+            bar.appendChild(fsBtn);
+          }
+        }
+
+        // Sol kart kapandığı için ana ekran sığdırmasını yeniden tetikle
+        window.dispatchEvent(new Event('resize'));
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountTopbarButtons);
+      } else {
+        mountTopbarButtons();
+      }
+    })();
+
+  </script>
+</body>
+</html>

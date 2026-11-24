@@ -1,0 +1,3097 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maarifin Kalbinde Oyun — Özdenetim Kelime Avı &amp; Yazılı Sınav Oluşturucu</title>
+    <style>
+        /* =========================================================
+           MAARİFİN KALBİNDE OYUN — KELİME AVI & YAZILI SINAV OLUŞTURUCU
+           Konu: Özdenetim (Nefis Terbiyesi) ve Ahlaki Değerler
+           Palet: Koyu Zümrüt Yeşili & Lacivert, Yüksek Kontrast
+           ========================================================= */
+        :root {
+            --bg-emerald-dark: #031B1A;
+            --bg-navy-deep: #07192E;
+            --panel-bg: #08272B;
+            --panel-border: #2DD4BF;
+            --cell-bg: #0D353C;
+            --cell-border: #1E5F68;
+            --cell-text: #FFFFFF;
+            --cell-hover: #164E58;
+            --cell-selecting: #FACC15;
+            --cell-selecting-text: #041517;
+            --gold-accent: #FACC15;
+            --mint-soft: #99F6E4;
+            --white-pure: #FFFFFF;
+            --found-bg: #10B981;
+            --found-text: #022C22;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-emerald-dark) 0%, var(--bg-navy-deep) 55%, #042422 100%);
+            color: var(--white-pure);
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ÜST BİLGİ ÇUBUĞU */
+        header.top-bar {
+            width: 100%;
+            height: 8vh;
+            min-height: 48px;
+            background: rgba(6, 26, 34, 0.94);
+            border-bottom: 3px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2vw;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            gap: 1vw;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 0.9vw;
+            min-width: 0;
+        }
+
+        .brand-badge {
+            background: var(--panel-border);
+            color: #031B1A;
+            font-weight: 900;
+            font-size: clamp(0.82rem, 1.1vw, 1.3rem);
+            padding: 0.4vh 0.85vw;
+            border-radius: 0.45vw;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .brand-title {
+            font-size: clamp(1.05rem, 1.55vw, 1.85rem);
+            font-weight: 900;
+            color: var(--white-pure);
+            white-space: nowrap;
+        }
+
+        .mode-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0.6vw;
+            background: var(--bg-navy-deep);
+            padding: 0.35vh 0.4vw;
+            border-radius: 0.6vw;
+            border: 1.5px solid var(--cell-border);
+        }
+
+        .mode-tab-btn {
+            background: transparent;
+            color: var(--mint-soft);
+            border: none;
+            border-radius: 0.45vw;
+            padding: 0.55vh 1.1vw;
+            font-size: clamp(0.85rem, 1.12vw, 1.3rem);
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .mode-tab-btn.active {
+            background: var(--panel-border);
+            color: #031B1A;
+            font-weight: 900;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+            flex-shrink: 0;
+        }
+
+        .date-pill {
+            background: var(--cell-bg);
+            border: 1.5px solid var(--panel-border);
+            color: var(--mint-soft);
+            font-size: clamp(0.82rem, 1.02vw, 1.2rem);
+            font-weight: 700;
+            padding: 0.45vh 0.8vw;
+            border-radius: 0.5vw;
+            white-space: nowrap;
+        }
+
+        .sound-btn {
+            background: var(--cell-bg);
+            color: var(--white-pure);
+            border: 2px solid var(--panel-border);
+            border-radius: 0.5vw;
+            padding: 0.45vh 0.8vw;
+            font-size: clamp(0.82rem, 1.05vw, 1.22rem);
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.35vw;
+            white-space: nowrap;
+        }
+
+        .sound-btn:hover {
+            background: var(--cell-hover);
+        }
+
+        /* ANA GÖRÜNÜM KAPSAYICILARI */
+        .view-panel {
+            display: none;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .view-panel.active {
+            display: flex;
+        }
+
+        /* =========================================================
+           1. GÖRÜNÜM: KELİME AVI BULMACASI (15x15)
+           ========================================================= */
+        main.workspace {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 1.8vw;
+            padding: 1.4vh 2vw;
+            overflow: hidden;
+        }
+
+        .grid-section {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+
+        .grid-frame {
+            background: var(--panel-bg);
+            border: 3px solid var(--panel-border);
+            border-radius: 1vw;
+            padding: 1.1vh;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            gap: 0.28vh;
+            width: min(77vh, 52vw);
+            height: min(77vh, 52vw);
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .grid-cell {
+            background: var(--cell-bg);
+            border: 1.5px solid var(--cell-border);
+            border-radius: 0.3vw;
+            color: var(--cell-text);
+            font-size: clamp(1rem, 2.35vh, 1.75rem);
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.1s ease, transform 0.1s ease, color 0.1s ease;
+            line-height: 1;
+        }
+
+        .grid-cell:hover {
+            background: var(--cell-hover);
+        }
+
+        .grid-cell.selecting {
+            background: var(--cell-selecting) !important;
+            color: var(--cell-selecting-text) !important;
+            border-color: var(--white-pure) !important;
+            transform: scale(1.05);
+            z-index: 2;
+        }
+
+        .grid-cell.found {
+            background: var(--found-bg);
+            color: var(--found-text);
+            border-color: #A7F3D0;
+        }
+
+        .sidebar-section {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            background: var(--panel-bg);
+            border: 3px solid var(--panel-border);
+            border-radius: 1vw;
+            padding: 1.6vh 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.2vh;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--cell-border);
+            padding-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-size: clamp(1.15rem, 1.55vw, 1.85rem);
+            font-weight: 900;
+            color: var(--gold-accent);
+        }
+
+        .progress-badge {
+            background: var(--bg-navy-deep);
+            border: 2px solid var(--panel-border);
+            color: var(--white-pure);
+            font-size: clamp(0.95rem, 1.25vw, 1.45rem);
+            font-weight: 900;
+            padding: 0.45vh 1vw;
+            border-radius: 0.55vw;
+        }
+
+        .hint-banner {
+            background: rgba(13, 53, 60, 0.85);
+            border-left: 4px solid var(--gold-accent);
+            padding: 0.85vh 1vw;
+            border-radius: 0.4vw;
+            font-size: clamp(0.88rem, 1.08vw, 1.25rem);
+            color: var(--mint-soft);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.9vh 1vw;
+            flex: 1;
+            min-height: 0;
+            align-content: center;
+            list-style: none;
+        }
+
+        .word-item {
+            background: var(--cell-bg);
+            border: 2px solid var(--cell-border);
+            border-radius: 0.55vw;
+            padding: 0.85vh 0.9vw;
+            font-size: clamp(0.98rem, 1.32vw, 1.55rem);
+            font-weight: 900;
+            color: var(--white-pure);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            letter-spacing: 0.03em;
+            transition: all 0.2s ease;
+        }
+
+        .word-item .word-check {
+            font-size: clamp(0.9rem, 1.1vw, 1.3rem);
+            opacity: 0.35;
+        }
+
+        .word-item.found {
+            background: rgba(16, 185, 129, 0.22);
+            border-color: var(--found-bg);
+            color: #6EE7B7;
+            text-decoration: line-through;
+        }
+
+        .word-item.found .word-check {
+            opacity: 1;
+            color: var(--gold-accent);
+            text-decoration: none;
+        }
+
+        .completion-banner {
+            display: none;
+            background: #064E3B;
+            border: 2px solid #34D399;
+            border-radius: 0.6vw;
+            padding: 0.9vh 1vw;
+            text-align: center;
+            font-size: clamp(1rem, 1.28vw, 1.5rem);
+            font-weight: 900;
+            color: var(--gold-accent);
+            flex-shrink: 0;
+        }
+
+        .completion-banner.visible {
+            display: block;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 1vw;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 1.3vh 1vw;
+            border-radius: 0.7vw;
+            border: 2px solid var(--white-pure);
+            font-size: clamp(0.95rem, 1.22vw, 1.42rem);
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5vw;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+        }
+
+        .btn-new {
+            background: var(--panel-border);
+            color: #031B1A;
+        }
+
+        .btn-print {
+            background: var(--gold-accent);
+            color: #041517;
+        }
+
+        /* =========================================================
+           2. GÖRÜNÜM: YAZILI SINAV OLUŞTURUCU
+           ========================================================= */
+        .exam-workspace {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            align-items: stretch;
+            gap: 1.6vw;
+            padding: 1.4vh 2vw;
+            overflow: hidden;
+        }
+
+        .exam-settings-panel {
+            flex: 0 0 32%;
+            background: var(--panel-bg);
+            border: 3px solid var(--panel-border);
+            border-radius: 1vw;
+            padding: 1.5vh 1.3vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1vh;
+            overflow: hidden;
+        }
+
+        .exam-panel-title {
+            font-size: clamp(1.1rem, 1.45vw, 1.7rem);
+            font-weight: 900;
+            color: var(--gold-accent);
+            border-bottom: 2px solid var(--cell-border);
+            padding-bottom: 0.8vh;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45vh;
+        }
+
+        .form-group label {
+            font-size: clamp(0.85rem, 1.05vw, 1.2rem);
+            font-weight: 800;
+            color: var(--mint-soft);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--cell-bg);
+            border: 2px solid var(--cell-border);
+            border-radius: 0.5vw;
+            color: var(--white-pure);
+            padding: 0.8vh 0.8vw;
+            font-size: clamp(0.9rem, 1.1vw, 1.25rem);
+            font-weight: 700;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--panel-border);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6vw;
+            background: var(--cell-bg);
+            border: 2px solid var(--cell-border);
+            border-radius: 0.5vw;
+            padding: 0.8vh 0.8vw;
+            cursor: pointer;
+            font-size: clamp(0.88rem, 1.08vw, 1.22rem);
+            font-weight: 800;
+            color: var(--white-pure);
+        }
+
+        .checkbox-row input {
+            width: 1.2vw;
+            height: 1.2vw;
+            accent-color: var(--gold-accent);
+        }
+
+        /* ÇOKLU SORU TÜRÜ & SAYI AYARLAMA PANELİ */
+        .mixer-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5vw;
+        }
+
+        .mixer-header-row label {
+            font-size: clamp(0.85rem, 1.05vw, 1.2rem);
+            font-weight: 800;
+            color: var(--mint-soft);
+        }
+
+        .total-questions-pill {
+            background: var(--bg-navy-deep);
+            border: 1.5px solid var(--panel-border);
+            color: var(--gold-accent);
+            font-size: clamp(0.82rem, 0.98vw, 1.15rem);
+            font-weight: 900;
+            padding: 0.25vh 0.7vw;
+            border-radius: 0.4vw;
+            white-space: nowrap;
+        }
+
+        .type-mixer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6vh;
+        }
+
+        .type-mixer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6vw;
+            background: var(--cell-bg);
+            border: 2px solid var(--cell-border);
+            border-radius: 0.5vw;
+            padding: 0.55vh 0.7vw;
+            transition: opacity 0.15s ease, border-color 0.15s ease;
+        }
+
+        .type-mixer-row.disabled {
+            opacity: 0.55;
+        }
+
+        .type-check-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+            cursor: pointer;
+            font-size: clamp(0.85rem, 1.02vw, 1.18rem);
+            font-weight: 800;
+            color: var(--white-pure);
+            flex: 1;
+        }
+
+        .type-check-label input {
+            width: 1.15vw;
+            height: 1.15vw;
+            accent-color: var(--panel-border);
+            cursor: pointer;
+        }
+
+        .stepper-box {
+            display: flex;
+            align-items: center;
+            gap: 0.3vw;
+        }
+
+        .stepper-btn {
+            width: clamp(1.6rem, 2vw, 2.3rem);
+            height: clamp(1.6rem, 2vw, 2.3rem);
+            border-radius: 0.35vw;
+            border: 1.5px solid var(--panel-border);
+            background: var(--bg-navy-deep);
+            color: var(--white-pure);
+            font-size: clamp(0.95rem, 1.2vw, 1.4rem);
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .stepper-btn:hover {
+            background: var(--panel-border);
+            color: #031B1A;
+        }
+
+        .stepper-count {
+            width: clamp(2rem, 2.4vw, 2.8rem);
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: var(--gold-accent);
+            font-size: clamp(0.95rem, 1.15vw, 1.35rem);
+            font-weight: 900;
+            outline: none;
+        }
+
+        .exam-info-note {
+            background: rgba(13, 53, 60, 0.85);
+            border-left: 4px solid var(--panel-border);
+            padding: 0.8vh 0.9vw;
+            border-radius: 0.4vw;
+            font-size: clamp(0.82rem, 0.98vw, 1.12rem);
+            color: var(--mint-soft);
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        /* SAĞ: CANLI A4 SINAV KÂĞIDI ÖNİZLEMESİ */
+        .exam-preview-wrapper {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            background: #0B1E24;
+            border: 3px solid var(--panel-border);
+            border-radius: 1vw;
+            padding: 1.2vh 1.4vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .exam-sheet {
+            background: #FFFFFF;
+            color: #111827;
+            border-radius: 0.5vw;
+            padding: 1.6vh 1.8vw;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1vh;
+        }
+
+        .sheet-header {
+            border-bottom: 2px solid #111827;
+            padding-bottom: 0.8vh;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1vw;
+        }
+
+        .sheet-title-block h3 {
+            font-size: clamp(1rem, 1.35vw, 1.55rem);
+            font-weight: 900;
+            color: #0F172A;
+        }
+
+        .sheet-title-block p {
+            font-size: clamp(0.82rem, 1vw, 1.1rem);
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .sheet-student-meta {
+            display: flex;
+            gap: 1.2vw;
+            font-size: clamp(0.8rem, 0.95vw, 1.05rem);
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .sheet-questions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1vh 1.6vw;
+        }
+
+        .exam-q-card {
+            border: 1px solid #CBD5E1;
+            border-radius: 0.4vw;
+            padding: 0.8vh 0.9vw;
+            background: #F8FAFC;
+            break-inside: avoid;
+        }
+
+        .exam-q-type {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #0F766E;
+            background: #CCFBF1;
+            padding: 0.15vh 0.45vw;
+            border-radius: 0.25vw;
+            margin-bottom: 0.35vh;
+        }
+
+        .exam-q-text {
+            font-size: clamp(0.85rem, 1vw, 1.12rem);
+            font-weight: 700;
+            color: #0F172A;
+            line-height: 1.32;
+            margin-bottom: 0.45vh;
+        }
+
+        .exam-q-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.3vh 0.6vw;
+            font-size: clamp(0.8rem, 0.92vw, 1.02rem);
+            color: #1E293B;
+            font-weight: 600;
+        }
+
+        .exam-q-answer-line {
+            margin-top: 0.5vh;
+            border-bottom: 1.5px dashed #64748B;
+            height: 1.8vh;
+        }
+
+        .answer-key-box {
+            margin-top: 1vh;
+            border-top: 2px dashed #0F172A;
+            padding-top: 0.8vh;
+            display: none;
+        }
+
+        .answer-key-box.visible {
+            display: block;
+        }
+
+        .answer-key-box h4 {
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #0F172A;
+            margin-bottom: 0.4vh;
+        }
+
+        .answer-key-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5vh 1.2vw;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #065F46;
+        }
+
+        /* ALT BİLGİ ÇUBUĞU (FOOTER) */
+        footer.bottom-bar {
+            width: 100%;
+            height: 5.5vh;
+            min-height: 36px;
+            background: rgba(6, 26, 34, 0.94);
+            border-top: 2px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2vw;
+            flex-shrink: 0;
+        }
+
+        .footer-maarif {
+            font-size: clamp(0.85rem, 1.08vw, 1.25rem);
+            font-weight: 800;
+            color: var(--mint-soft);
+        }
+
+        .footer-author {
+            font-size: clamp(0.88rem, 1.12vw, 1.3rem);
+            font-weight: 900;
+            color: var(--gold-accent);
+            letter-spacing: 0.02em;
+        }
+
+        /* =========================================================
+           YAZDIRMA / A4 ÇIKTI STİLLERİ (@media print)
+           ========================================================= */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+
+            html, body {
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: #FFFFFF !important;
+                color: #000000 !important;
+            }
+
+            header.top-bar, .exam-settings-panel, .sound-btn, .controls-row, .hint-banner, .completion-banner, .progress-badge {
+                display: none !important;
+            }
+
+            .view-panel:not(.active) {
+                display: none !important;
+            }
+
+            /* Kelime Avı Print */
+            main.workspace {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                padding: 0 !important;
+                gap: 12px !important;
+                overflow: visible !important;
+            }
+
+            .grid-frame {
+                background: #FFFFFF !important;
+                border: 2px solid #000000 !important;
+                box-shadow: none !important;
+                padding: 6px !important;
+            }
+
+            .word-grid {
+                width: 170mm !important;
+                height: 170mm !important;
+                gap: 0 !important;
+                border: 1.5px solid #000000 !important;
+            }
+
+            .grid-cell {
+                background: #FFFFFF !important;
+                color: #000000 !important;
+                border: 1px solid #444444 !important;
+                border-radius: 0 !important;
+                font-size: 14pt !important;
+                font-weight: 700 !important;
+            }
+
+            .grid-cell.found, .grid-cell.selecting {
+                background: #FFFFFF !important;
+                color: #000000 !important;
+            }
+
+            .sidebar-section {
+                width: 170mm !important;
+                background: #FFFFFF !important;
+                border: 1.5px solid #000000 !important;
+                box-shadow: none !important;
+                padding: 8px 12px !important;
+            }
+
+            .sidebar-header {
+                border-bottom: 1.5px solid #000000 !important;
+                padding-bottom: 4px !important;
+            }
+
+            .sidebar-title {
+                color: #000000 !important;
+                font-size: 12pt !important;
+            }
+
+            .word-list {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 5px !important;
+            }
+
+            .word-item {
+                background: #FFFFFF !important;
+                color: #000000 !important;
+                border: 1px solid #666666 !important;
+                padding: 4px 6px !important;
+                font-size: 9.5pt !important;
+                text-decoration: none !important;
+            }
+
+            .word-item .word-check {
+                display: none !important;
+            }
+
+            /* Yazılı Sınav Print (Her A4 sayfası için 12-15 soru sığacak düzen) */
+            .exam-workspace {
+                padding: 0 !important;
+                display: block !important;
+                overflow: visible !important;
+            }
+
+            .exam-preview-wrapper {
+                border: none !important;
+                background: #FFFFFF !important;
+                padding: 0 !important;
+                overflow: visible !important;
+            }
+
+            .exam-sheet {
+                box-shadow: none !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                gap: 6px !important;
+            }
+
+            .sheet-questions-grid {
+                gap: 6px 10px !important;
+            }
+
+            .exam-q-card {
+                background: #FFFFFF !important;
+                border: 1px solid #888888 !important;
+                padding: 5px 7px !important;
+            }
+
+            .exam-q-type {
+                background: #FFFFFF !important;
+                color: #000000 !important;
+                border: 1px solid #666666 !important;
+                font-size: 7.5pt !important;
+            }
+
+            .exam-q-text {
+                font-size: 9pt !important;
+                line-height: 1.25 !important;
+            }
+
+            .exam-q-options {
+                font-size: 8.5pt !important;
+            }
+
+            footer.bottom-bar {
+                height: auto !important;
+                background: #FFFFFF !important;
+                border-top: 1.5px solid #000000 !important;
+                padding: 5px 0 0 0 !important;
+                margin-top: 8px !important;
+            }
+
+            .footer-maarif, .footer-author {
+                color: #000000 !important;
+                font-size: 9.5pt !important;
+            }
+        }
+    
+    /* === MAARİFİN KALBİNDE OYUN: KATILIM MODU & 2-10 GRUP YARIŞMASI STANDARDI === */
+    .play-type-box {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(6px, 0.85vh, 10px);
+      background-color: var(--bg-surface, rgba(15, 23, 42, 0.78));
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.45));
+      border-radius: var(--radius-md, 14px);
+      padding: clamp(8px, 1vh, 14px) clamp(12px, 1.4vw, 20px);
+      margin: clamp(6px, 0.8vh, 12px) 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .play-type-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .play-type-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .play-tab-btn {
+      padding: clamp(6px, 0.8vh, 11px) clamp(12px, 1.3vw, 20px);
+      border-radius: var(--radius-md, 12px);
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.45));
+      background-color: var(--bg-card, rgba(30, 41, 59, 0.8));
+      color: var(--text-main, #f8fafc);
+      font-family: inherit;
+      font-size: clamp(0.86rem, 1.08vw, 1.2rem);
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .play-tab-btn.selected, .play-tab-btn.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a;
+      border-color: #fde68a;
+      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5);
+    }
+    .group-setup-panel {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(6px, 0.8vh, 10px);
+      border-top: 1.5px solid var(--border-crisp, rgba(251, 191, 36, 0.35));
+      padding-top: clamp(6px, 0.8vh, 10px);
+    }
+    .group-setup-panel[hidden] {
+      display: none !important;
+    }
+    .group-count-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: clamp(0.86rem, 1.05vw, 1.18rem);
+      font-weight: 800;
+      color: var(--text-main, #f8fafc);
+    }
+    .group-counter-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .qty-btn {
+      width: clamp(34px, 2.8vw, 44px);
+      height: clamp(34px, 2.8vw, 44px);
+      border-radius: var(--radius-md, 10px);
+      border: 2px solid var(--accent-primary, #fbbf24);
+      background-color: var(--bg-surface, #1e293b);
+      color: var(--text-main, #f8fafc);
+      font-size: clamp(1.05rem, 1.3vw, 1.45rem);
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qty-btn:hover:not(:disabled) {
+      border-color: #fbbf24;
+      background-color: rgba(251, 191, 36, 0.2);
+    }
+    .group-count-input {
+      width: clamp(54px, 4.5vw, 72px);
+      height: clamp(34px, 2.8vw, 44px);
+      text-align: center;
+      border-radius: var(--radius-md, 10px);
+      border: 2px solid var(--gold, #fbbf24);
+      background-color: var(--bg-deep, #0f172a);
+      color: var(--gold, #fbbf24);
+      font-family: inherit;
+      font-size: clamp(0.95rem, 1.2vw, 1.35rem);
+      font-weight: 900;
+    }
+    .group-names-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: clamp(6px, 0.6vw, 10px);
+      width: 100%;
+    }
+    .group-name-input {
+      width: 100%;
+      background-color: var(--bg-deep, #0f172a);
+      color: var(--text-main, #f8fafc);
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.4));
+      border-radius: var(--radius-md, 10px);
+      padding: clamp(5px, 0.65vh, 9px) clamp(8px, 0.8vw, 12px);
+      font-family: inherit;
+      font-size: clamp(0.82rem, 0.98vw, 1.1rem);
+      font-weight: 800;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .group-name-input:focus {
+      outline: 2px solid #fbbf24;
+      border-color: #fbbf24;
+    }
+    .groups-scoreboard-strip {
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 0.7vw, 12px);
+      background-color: var(--bg-surface, rgba(15, 23, 42, 0.88));
+      border: 2px solid var(--border-crisp, rgba(251, 191, 36, 0.5));
+      border-radius: var(--radius-md, 12px);
+      padding: clamp(5px, 0.65vh, 9px) clamp(10px, 1.1vw, 16px);
+      margin: 6px 0;
+      flex-shrink: 0;
+      overflow-x: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .groups-scoreboard-strip[hidden] {
+      display: none !important;
+    }
+    .turn-indicator-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      background-color: var(--gold-bg, rgba(251, 191, 36, 0.18));
+      border: 2.5px solid var(--gold, #fbbf24);
+      color: var(--gold, #fbbf24);
+      border-radius: 999px;
+      padding: clamp(4px, 0.55vh, 8px) clamp(10px, 1vw, 16px);
+      font-size: clamp(0.82rem, 1.02vw, 1.18rem);
+      font-weight: 900;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .groups-cards-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: clamp(6px, 0.65vw, 10px);
+      flex: 1 1 auto;
+    }
+    .group-score-card {
+      flex: 1 1 115px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background-color: var(--bg-card, rgba(30, 41, 59, 0.85));
+      border: 2px solid var(--border-crisp, rgba(148, 163, 184, 0.35));
+      border-radius: var(--radius-md, 10px);
+      padding: clamp(4px, 0.55vh, 8px) clamp(8px, 0.9vw, 14px);
+      font-size: clamp(0.8rem, 0.98vw, 1.12rem);
+      font-weight: 800;
+      color: var(--text-soft, #cbd5e1);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      min-width: 0;
+    }
+    .group-score-card.active-turn {
+      background-color: var(--gold-bg, rgba(251, 191, 36, 0.22));
+      border: 2.5px solid var(--gold, #fbbf24);
+      color: var(--text-main, #ffffff);
+      box-shadow: 0 0 0 2px var(--gold, #fbbf24);
+      transform: translateY(-1px);
+    }
+    .group-card-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .group-card-pts {
+      color: var(--gold, #fbbf24);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .maarif-group-result-box {
+      width: 100%;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 32vh;
+      overflow-y: auto;
+    }
+    .maarif-leader-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 2px solid rgba(148, 163, 184, 0.35);
+      font-weight: 800;
+      font-size: clamp(0.9rem, 1.1vw, 1.25rem);
+      color: #f8fafc;
+    }
+    .maarif-leader-row.top-1 {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.28), rgba(217, 119, 6, 0.22));
+      border: 2.5px solid #fbbf24;
+      color: #fde68a;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+    }
+
+  
+    
+
+  
+    /* === ANA SAYFA (KARŞILAMA EKRANI) SIFIR TAŞMA VE OTOMATİK SIĞDIRMA MİMARİSİ V2 === */
+    #screen-home, #home-screen, #homeScreen, #screenHome,
+    #screen-start, #start-screen, #startScreen, #screenStart,
+    #screen-setup, #setup-screen, #setupScreen, #screenSetup,
+    #intro-screen, #introScreen, #welcome-screen, #welcomeScreen,
+    #gradeSelectionScreen, #screen-menu, #menuScreen {
+      max-height: 100dvh !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .bireysel-mode-switch {
+      display: none !important;
+    }
+    .play-type-box {
+      padding: clamp(4px, 0.5vh, 7px) clamp(8px, 0.9vw, 12px) !important;
+      margin: clamp(2px, 0.3vh, 5px) 0 !important;
+      gap: clamp(3px, 0.35vh, 5px) !important;
+      flex-shrink: 0 !important;
+    }
+    .play-tab-btn {
+      padding: clamp(3px, 0.45vh, 7px) clamp(8px, 0.9vw, 12px) !important;
+      font-size: clamp(0.75rem, 0.88vw, 1rem) !important;
+      min-height: 30px !important;
+    }
+    .group-setup-panel {
+      gap: clamp(3px, 0.35vh, 5px) !important;
+      padding-top: clamp(3px, 0.35vh, 5px) !important;
+    }
+    .group-names-grid {
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+      gap: clamp(3px, 0.35vw, 6px) !important;
+      max-height: 8.5vh !important;
+      overflow-y: auto !important;
+    }
+    .group-name-input {
+      padding: clamp(2px, 0.3vh, 4px) clamp(4px, 0.45vw, 8px) !important;
+      font-size: clamp(0.72rem, 0.82vw, 0.92rem) !important;
+      min-height: 26px !important;
+    }
+    .bireysel-setup-panel {
+      padding: clamp(4px, 0.45vh, 7px) clamp(8px, 0.85vw, 12px) !important;
+      gap: clamp(3px, 0.35vh, 5px) !important;
+      margin-bottom: clamp(2px, 0.25vh, 4px) !important;
+      max-height: 11.5vh !important;
+      overflow-y: auto !important;
+    }
+    .bireysel-textarea {
+      min-height: 30px !important;
+      max-height: 44px !important;
+    }
+    .bireysel-chips {
+      max-height: 40px !important;
+    }
+
+  
+    /* === ÜST BAR (NASIL OYNANIR, ANA SAYFA, TAM EKRAN) VE NASIL OYNANIR MODALI === */
+    .how-to-play-card {
+      display: none !important;
+    }
+    .home-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .maarif-top-btn {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4em;
+      background-color: var(--bg-card, rgba(30, 41, 59, 0.9));
+      color: var(--text-white, var(--text-main, #f8fafc));
+      border: 2px solid var(--accent-sky, var(--gold, #fbbf24));
+      border-radius: 10px;
+      padding: clamp(5px, 0.65vh, 9px) clamp(10px, 1vw, 15px);
+      font-family: inherit;
+      font-size: clamp(0.82rem, 1.05vw, 1.2rem);
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+    .maarif-top-btn:hover {
+      filter: brightness(1.12);
+    }
+    .maarif-top-btn:active {
+      transform: translateY(1px);
+    }
+    .maarif-howto-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.82);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2vh 2vw;
+    }
+    .maarif-howto-backdrop.open {
+      display: flex;
+    }
+    .maarif-howto-modal {
+      width: min(92vw, 860px);
+      max-height: 86vh;
+      background: var(--bg-card, #0f172a);
+      color: var(--text-white, var(--text-main, #f8fafc));
+      border: 3px solid var(--accent-gold, var(--gold, #fbbf24));
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .maarif-howto-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 2px solid rgba(251, 191, 36, 0.4);
+    }
+    .maarif-howto-header h3 {
+      margin: 0;
+      font-size: clamp(1.1rem, 1.5vw, 1.65rem);
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    .maarif-howto-close {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 2px solid #f87171;
+      border-radius: 10px;
+      padding: 5px 12px;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .maarif-howto-body {
+      padding: 18px 22px;
+      overflow-y: auto;
+      font-size: clamp(0.95rem, 1.2vw, 1.3rem);
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+  </style>
+</head>
+<body>
+
+    <!-- ÜST BİLGİ ALANI -->
+    <header class="top-bar">
+        <div class="brand-group">
+            <span class="brand-badge">DKAB • ÖZDENETİM</span>
+            <h1 class="brand-title">Maarifin Kalbinde Oyun</h1>
+        </div>
+
+        <nav class="mode-tabs" aria-label="Bölüm Seçimi">
+            <button id="tabPuzzleBtn" class="mode-tab-btn active" type="button">🧩 Kelime Avı (15×15)</button>
+            <button id="tabExamBtn" class="mode-tab-btn" type="button">📝 Yazılı Sınav Oluştur</button>
+        </nav>
+
+        <div class="header-right">
+            <span id="todayDate" class="date-pill"></span>
+            <button id="soundToggleBtn" class="sound-btn" type="button" aria-label="Sesi Aç veya Kapat">
+                <span id="soundIcon">🔊</span>
+                <span id="soundLabel">Ses Açık</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 1. BÖLÜM: KELİME AVI BULMACASI -->
+    <div id="puzzleView" class="view-panel active">
+        <main class="workspace">
+            <section class="grid-section" aria-label="15x15 Kelime Avı Izgarası">
+                <div class="grid-frame">
+                    <div id="wordGrid" class="word-grid"></div>
+                </div>
+            </section>
+
+            <aside class="sidebar-section" aria-label="Bulunacak Kelimeler ve Kontroller">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">Bulunacak Kelimeler (14)</h2>
+                    <span id="progressBadge" class="progress-badge">0 / 14 Bulundu</span>
+                </div>
+
+                <div class="hint-banner">
+                    👆 İlk harften son harfe parmakla veya fareyle sürükle (Soldan sağa, yukarıdan aşağıya veya çapraz).
+                </div>
+
+                <ul id="wordList" class="word-list"></ul>
+
+                <div id="completionBanner" class="completion-banner">
+                    🏆 Tebrikler! Tüm kavramları eksiksiz buldun!
+                </div>
+
+                <div class="controls-row">
+                    <button id="newPuzzleBtn" class="action-btn btn-new" type="button">
+                        <span>🔄</span>
+                        <span>Yeni Bulmaca Oluştur</span>
+                    </button>
+                    <button id="printPuzzleBtn" class="action-btn btn-print" type="button">
+                        <span>🖨️</span>
+                        <span>Yazdır / A4 Çıktı Al</span>
+                    </button>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- 2. BÖLÜM: YAZILI SINAV OLUŞTURUCU -->
+    <div id="examView" class="view-panel">
+        <section class="exam-workspace" aria-label="Yazılı Sınav Oluşturucu">
+            <aside class="exam-settings-panel">
+                <h2 class="exam-panel-title">📝 Yazılı Sınav Ayarları</h2>
+
+                <div class="form-group">
+                    <label for="examSchoolInput">Okul / Kurum Adı</label>
+                    <input id="examSchoolInput" class="form-input" type="text" value="... ORTAOKULU / İMAM HATİP ORTAOKULU">
+                </div>
+
+                <div class="form-group">
+                    <label for="examTitleInput">Sınav Başlığı</label>
+                    <input id="examTitleInput" class="form-input" type="text" value="DKAB Dersi — Özdenetim ve Ahlaki Değerler Yazılı Sınavı">
+                </div>
+
+                <div class="form-group">
+                    <div class="mixer-header-row">
+                        <label>Soru Türlerini Çoklu Seç &amp; Sayısını Ayarla</label>
+                        <span id="totalQuestionsPill" class="total-questions-pill">Toplam: 13 Soru</span>
+                    </div>
+
+                    <div class="type-mixer-list" id="typeMixerList">
+                        <div class="type-mixer-row" data-kind="mc">
+                            <label class="type-check-label">
+                                <input type="checkbox" class="kind-check" data-kind="mc" checked>
+                                <span>Çoktan Seçmeli</span>
+                            </label>
+                            <div class="stepper-box">
+                                <button type="button" class="stepper-btn" data-kind="mc" data-delta="-1" aria-label="Çoktan Seçmeli Azalt">−</button>
+                                <span class="stepper-count" id="count-mc">6</span>
+                                <button type="button" class="stepper-btn" data-kind="mc" data-delta="1" aria-label="Çoktan Seçmeli Artır">+</button>
+                            </div>
+                        </div>
+
+                        <div class="type-mixer-row" data-kind="tf">
+                            <label class="type-check-label">
+                                <input type="checkbox" class="kind-check" data-kind="tf" checked>
+                                <span>Doğru / Yanlış</span>
+                            </label>
+                            <div class="stepper-box">
+                                <button type="button" class="stepper-btn" data-kind="tf" data-delta="-1" aria-label="Doğru Yanlış Azalt">−</button>
+                                <span class="stepper-count" id="count-tf">3</span>
+                                <button type="button" class="stepper-btn" data-kind="tf" data-delta="1" aria-label="Doğru Yanlış Artır">+</button>
+                            </div>
+                        </div>
+
+                        <div class="type-mixer-row" data-kind="fill">
+                            <label class="type-check-label">
+                                <input type="checkbox" class="kind-check" data-kind="fill" checked>
+                                <span>Boşluk Doldurma</span>
+                            </label>
+                            <div class="stepper-box">
+                                <button type="button" class="stepper-btn" data-kind="fill" data-delta="-1" aria-label="Boşluk Doldurma Azalt">−</button>
+                                <span class="stepper-count" id="count-fill">2</span>
+                                <button type="button" class="stepper-btn" data-kind="fill" data-delta="1" aria-label="Boşluk Doldurma Artır">+</button>
+                            </div>
+                        </div>
+
+                        <div class="type-mixer-row" data-kind="open">
+                            <label class="type-check-label">
+                                <input type="checkbox" class="kind-check" data-kind="open" checked>
+                                <span>Kısa Cevaplı / Açık Uçlu</span>
+                            </label>
+                            <div class="stepper-box">
+                                <button type="button" class="stepper-btn" data-kind="open" data-delta="-1" aria-label="Kısa Cevaplı Azalt">−</button>
+                                <span class="stepper-count" id="count-open">2</span>
+                                <button type="button" class="stepper-btn" data-kind="open" data-delta="1" aria-label="Kısa Cevaplı Artır">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="checkbox-row">
+                    <input id="showAnswerKeyCheck" type="checkbox">
+                    <span>Cevap Anahtarını Göster / Yazdır</span>
+                </label>
+
+                <div class="controls-row">
+                    <button id="generateExamBtn" class="action-btn btn-new" type="button">
+                        <span>🎲</span>
+                        <span>Soruları Karıştır</span>
+                    </button>
+                    <button id="printExamBtn" class="action-btn btn-print" type="button">
+                        <span>🖨️</span>
+                        <span>A4 Yazdır</span>
+                    </button>
+                </div>
+            </aside>
+
+            <div class="exam-preview-wrapper">
+                <div class="exam-sheet" id="examSheet">
+                    <div class="sheet-header">
+                        <div class="sheet-title-block">
+                            <h3 id="previewSchool">... ORTAOKULU / İMAM HATİP ORTAOKULU</h3>
+                            <p id="previewTitle">DKAB Dersi — Özdenetim ve Ahlaki Değerler Yazılı Sınavı</p>
+                        </div>
+                        <div class="sheet-student-meta">
+                            <span>Ad Soyad: __________________</span>
+                            <span>Sınıf / No: _______</span>
+                            <span>Puan: _____</span>
+                        </div>
+                    </div>
+
+                    <div id="examQuestionsGrid" class="sheet-questions-grid"></div>
+
+                    <div id="answerKeyBox" class="answer-key-box">
+                        <h4>✅ Cevap Anahtarı</h4>
+                        <div id="answerKeyList" class="answer-key-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ALT BİLGİ ALANI -->
+    <footer class="bottom-bar">
+        <div class="footer-maarif">Türkiye Yüzyılı Maarif Modeli'ne Uygundur</div>
+        <div class="footer-author">Hazırlayan: Ahmet ŞEN</div>
+    </footer>
+
+    <script>
+        /* =========================================================
+           14 ADET TEMEL KAVRAM (4-11 HARF, TAMAMI BÜYÜK TÜRKÇE HARF)
+           ========================================================= */
+        const WORDS = [
+            'ÖZDENETİM',
+            'DOĞRULUK',
+            'ÖLÇÜLÜLÜK',
+            'HOŞGÖRÜ',
+            'SORUMLULUK',
+            'MAHREMİYET',
+            'DÜRÜSTLÜK',
+            'MERHAMET',
+            'TERBİYE',
+            'ADALET',
+            'SABIR',
+            'İRADE',
+            'VAKAR',
+            'SAYGI'
+        ];
+
+        const GRID_SIZE = 15;
+        const TURKISH_ALPHABET = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
+
+        const DIRECTIONS = [
+            { dr: 0, dc: 1 },  // Soldan sağa
+            { dr: 1, dc: 0 },  // Yukarıdan aşağıya
+            { dr: 1, dc: 1 }   // Sol-üstten sağ-alta çapraz
+        ];
+
+        const FOUND_PALETTE = [
+            { bg: '#10B981', text: '#022C22' },
+            { bg: '#38BDF8', text: '#041E30' },
+            { bg: '#FACC15', text: '#261B02' },
+            { bg: '#A78BFA', text: '#1E103B' },
+            { bg: '#FB923C', text: '#2D1202' },
+            { bg: '#2DD4BF', text: '#032420' },
+            { bg: '#F472B6', text: '#350821' }
+        ];
+
+        /* =========================================================
+           WEB AUDIO API — HAFİF BAŞARI SESİ
+           ========================================================= */
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            ensureContext() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playWordFound() {
+                if (!this.enabled) return;
+                this.ensureContext();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    const start = now + i * 0.07;
+                    osc.frequency.setValueAtTime(freq, start);
+                    gain.gain.setValueAtTime(0.16, start);
+                    gain.gain.exponentialRampToValueAtTime(0.006, start + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + 0.18);
+                });
+            }
+
+            playAllCompleted() {
+                if (!this.enabled) return;
+                this.ensureContext();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    const start = now + i * 0.1;
+                    const dur = i === 3 ? 0.4 : 0.18;
+                    osc.frequency.setValueAtTime(freq, start);
+                    gain.gain.setValueAtTime(0.2, start);
+                    gain.gain.exponentialRampToValueAtTime(0.008, start + dur);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + dur);
+                });
+            }
+        }
+
+        const audio = new SoundEffects();
+
+        // Günün tarihini üst çubukta göster
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        /* =========================================================
+           SEKME (MOD) GEÇİŞLERİ
+           ========================================================= */
+        const tabPuzzleBtn = document.getElementById('tabPuzzleBtn');
+        const tabExamBtn = document.getElementById('tabExamBtn');
+        const puzzleView = document.getElementById('puzzleView');
+        const examView = document.getElementById('examView');
+
+        function switchMode(mode) {
+            const isPuzzle = mode === 'puzzle';
+            tabPuzzleBtn.classList.toggle('active', isPuzzle);
+            tabExamBtn.classList.toggle('active', !isPuzzle);
+            puzzleView.classList.toggle('active', isPuzzle);
+            examView.classList.toggle('active', !isPuzzle);
+        }
+
+        tabPuzzleBtn.addEventListener('click', () => switchMode('puzzle'));
+        tabExamBtn.addEventListener('click', () => switchMode('exam'));
+
+        /* =========================================================
+           KELİME AVI BULMACASI MANTIĞI
+           ========================================================= */
+        let grid = [];
+        let foundWords = new Set();
+        let isDragging = false;
+        let startCell = null;
+        let selectedCells = [];
+
+        const wordGridEl = document.getElementById('wordGrid');
+        const wordListEl = document.getElementById('wordList');
+        const progressBadgeEl = document.getElementById('progressBadge');
+        const completionBannerEl = document.getElementById('completionBanner');
+
+        function canPlaceWord(board, word, r, c, dr, dc) {
+            const endR = r + dr * (word.length - 1);
+            const endC = c + dc * (word.length - 1);
+            if (endR < 0 || endR >= GRID_SIZE || endC < 0 || endC >= GRID_SIZE) {
+                return false;
+            }
+            for (let i = 0; i < word.length; i++) {
+                const nr = r + dr * i;
+                const nc = c + dc * i;
+                if (board[nr][nc] !== '' && board[nr][nc] !== word[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function generatePuzzleData() {
+            const sortedWords = [...WORDS].sort((a, b) => b.length - a.length);
+
+            for (let attempt = 0; attempt < 80; attempt++) {
+                const board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(''));
+                let allPlaced = true;
+
+                for (const word of sortedWords) {
+                    const positions = [];
+                    for (let r = 0; r < GRID_SIZE; r++) {
+                        for (let c = 0; c < GRID_SIZE; c++) {
+                            for (const dir of DIRECTIONS) {
+                                if (canPlaceWord(board, word, r, c, dir.dr, dir.dc)) {
+                                    positions.push({ r, c, dr: dir.dr, dc: dir.dc });
+                                }
+                            }
+                        }
+                    }
+
+                    if (positions.length === 0) {
+                        allPlaced = false;
+                        break;
+                    }
+
+                    const chosen = positions[Math.floor(Math.random() * positions.length)];
+                    for (let i = 0; i < word.length; i++) {
+                        board[chosen.r + chosen.dr * i][chosen.c + chosen.dc * i] = word[i];
+                    }
+                }
+
+                if (allPlaced) {
+                    for (let r = 0; r < GRID_SIZE; r++) {
+                        for (let c = 0; c < GRID_SIZE; c++) {
+                            if (board[r][c] === '') {
+                                board[r][c] = TURKISH_ALPHABET[Math.floor(Math.random() * TURKISH_ALPHABET.length)];
+                            }
+                        }
+                    }
+                    return board;
+                }
+            }
+
+            return Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill('A'));
+        }
+
+        function renderPuzzle() {
+            grid = generatePuzzleData();
+            foundWords.clear();
+            selectedCells = [];
+            startCell = null;
+            isDragging = false;
+            completionBannerEl.classList.remove('visible');
+            updateProgress();
+
+            wordGridEl.innerHTML = '';
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.textContent = grid[r][c];
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    wordGridEl.appendChild(cell);
+                }
+            }
+
+            wordListEl.innerHTML = '';
+            WORDS.forEach((word) => {
+                const li = document.createElement('li');
+                li.className = 'word-item';
+                li.dataset.word = word;
+                li.innerHTML = `<span>${word}</span><span class="word-check">✓</span>`;
+                wordListEl.appendChild(li);
+            });
+        }
+
+        function updateProgress() {
+            progressBadgeEl.textContent = `${foundWords.size} / ${WORDS.length} Bulundu`;
+        }
+
+        function getCellEl(r, c) {
+            return wordGridEl.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
+        }
+
+        function clearSelectionHighlight() {
+            selectedCells.forEach(({ r, c }) => {
+                const el = getCellEl(r, c);
+                if (el) el.classList.remove('selecting');
+            });
+            selectedCells = [];
+        }
+
+        function computeLineCells(r1, c1, r2, c2) {
+            const dr = r2 - r1;
+            const dc = c2 - c1;
+            if (dr === 0 && dc === 0) return [{ r: r1, c: c1 }];
+
+            const absR = Math.abs(dr);
+            const absC = Math.abs(dc);
+            let stepR = 0, stepC = 0, steps = 0;
+
+            if (absR === 0) {
+                stepC = Math.sign(dc);
+                steps = absC;
+            } else if (absC === 0) {
+                stepR = Math.sign(dr);
+                steps = absR;
+            } else if (absR === absC) {
+                stepR = Math.sign(dr);
+                stepC = Math.sign(dc);
+                steps = absR;
+            } else {
+                if (absR > absC * 2) {
+                    stepR = Math.sign(dr);
+                    steps = absR;
+                } else if (absC > absR * 2) {
+                    stepC = Math.sign(dc);
+                    steps = absC;
+                } else {
+                    stepR = Math.sign(dr);
+                    stepC = Math.sign(dc);
+                    steps = Math.max(absR, absC);
+                }
+            }
+
+            const cells = [];
+            for (let i = 0; i <= steps; i++) {
+                const nr = r1 + stepR * i;
+                const nc = c1 + stepC * i;
+                if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                    cells.push({ r: nr, c: nc });
+                }
+            }
+            return cells;
+        }
+
+        function applySelection(cells) {
+            clearSelectionHighlight();
+            selectedCells = cells;
+            selectedCells.forEach(({ r, c }) => {
+                const el = getCellEl(r, c);
+                if (el) el.classList.add('selecting');
+            });
+        }
+
+        function checkSelectedWord() {
+            if (selectedCells.length < 4) {
+                clearSelectionHighlight();
+                return;
+            }
+
+            const candidate = selectedCells.map(({ r, c }) => grid[r][c]).join('');
+
+            if (WORDS.includes(candidate) && !foundWords.has(candidate)) {
+                const colorTheme = FOUND_PALETTE[foundWords.size % FOUND_PALETTE.length];
+                foundWords.add(candidate);
+
+                selectedCells.forEach(({ r, c }) => {
+                    const el = getCellEl(r, c);
+                    if (el) {
+                        el.classList.remove('selecting');
+                        el.classList.add('found');
+                        el.style.backgroundColor = colorTheme.bg;
+                        el.style.color = colorTheme.text;
+                    }
+                });
+
+                const listItem = wordListEl.querySelector(`.word-item[data-word="${candidate}"]`);
+                if (listItem) {
+                    listItem.classList.add('found');
+                }
+
+                updateProgress();
+
+                if (foundWords.size === WORDS.length) {
+                    completionBannerEl.classList.add('visible');
+                    audio.playAllCompleted();
+                } else {
+                    audio.playWordFound();
+                }
+                selectedCells = [];
+            } else {
+                clearSelectionHighlight();
+            }
+        }
+
+        wordGridEl.addEventListener('pointerdown', (e) => {
+            const cell = e.target.closest('.grid-cell');
+            if (!cell) return;
+            e.preventDefault();
+            isDragging = true;
+            startCell = { r: Number(cell.dataset.row), c: Number(cell.dataset.col) };
+            applySelection([startCell]);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging || !startCell) return;
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            const cell = target ? target.closest('.grid-cell') : null;
+            if (!cell) return;
+
+            const line = computeLineCells(startCell.r, startCell.c, Number(cell.dataset.row), Number(cell.dataset.col));
+            applySelection(line);
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            checkSelectedWord();
+            startCell = null;
+        });
+
+        document.getElementById('newPuzzleBtn').addEventListener('click', renderPuzzle);
+        document.getElementById('printPuzzleBtn').addEventListener('click', () => window.print());
+
+        document.getElementById('soundToggleBtn').addEventListener('click', () => {
+            audio.enabled = !audio.enabled;
+            document.getElementById('soundIcon').textContent = audio.enabled ? '🔊' : '🔇';
+            document.getElementById('soundLabel').textContent = audio.enabled ? 'Ses Açık' : 'Ses Kapalı';
+        });
+
+        /* =========================================================
+           YAZILI SINAV OLUŞTURUCU VERİ TABANI VE MANTIĞI
+           ========================================================= */
+        const EXAM_BANK = [
+            // Çoktan Seçmeli Sorular
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Kişinin öfke, arzu ve dürtülerini kontrol ederek doğru ve ahlaklı olanı seçebilme gücüne ne ad verilir?',
+                options: ['A) Özdenetim', 'B) Kibir', 'C) Gıybet', 'D) Gösteriş'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: '"Pehlivan, güreşte rakibini yenen değil; öfke anında nefsine hâkim olandır." Hadisi aşağıdaki kavramlardan hangisini vurgular?',
+                options: ['A) Cimrilik', 'B) İrade ve Sabır', 'C) Acelecilik', 'D) Haset'],
+                answer: 'B'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Sınıf grubunda kendisi hakkında haksız bir mesaj gören bir öğrencinin özdenetim gereği yapması gereken en doğru davranış hangisidir?',
+                options: ['A) Daha ağır hakaretlerle karşılık vermek', 'B) Okulda kavgaya tutuşmak', 'C) Öfkesini yutup özelden vakur bir dille uyarmak', 'D) Grubu tamamen kapatmak'],
+                answer: 'C'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Bir arkadaşının özel mesajının ekran görüntüsünü izinsiz paylaşmak hangi ahlaki ilkenin ihlalidir?',
+                options: ['A) Cömertlik', 'B) Mahremiyet', 'C) Tevazu', 'D) Cesaret'],
+                answer: 'B'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Kimsenin görmediği bir sınav anında kopya çekmeyip kendi emeğine güvenen bir öğrenci hangi değeri yaşamaktadır?',
+                options: ['A) Dürüstlük', 'B) Savurganlık', 'C) Ön yargı', 'D) Vefasızlık'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: '"O takva sahipleri ki, öfkelerini yutarlar ve insanları affederler." (Âl-i İmrân, 134) ayetinde övülen davranış hangisidir?',
+                options: ['A) Kin tutmak', 'B) Öfkeyi kontrol edip bağışlamak', 'C) Dedikodu yapmak', 'D) İntikam almak'],
+                answer: 'B'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Her davranışta aşırılıktan kaçınıp dengeyi gözetmeye ne ad verilir?',
+                options: ['A) Ölçülülük', 'B) İsraf', 'C) Hırs', 'D) Gaflet'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Bir kimsenin görevlerini zamanında ve eksiksiz yerine getirme bilincine ne denir?',
+                options: ['A) Bencillik', 'B) Sorumluluk', 'C) Tembellik', 'D) Kibir'],
+                answer: 'B'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Hak sahibine hakkını vermek ve herkese eşit, hakkaniyetli davranmak hangi kavramla ifade edilir?',
+                options: ['A) Adalet', 'B) Riayetsizlik', 'C) Haksızlık', 'D) Kaba söz'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Zorluk ve tahrikler karşısında ağırbaşlılığı, onuru ve olgunluğu korumaya ne ad verilir?',
+                options: ['A) Panik', 'B) Vakar', 'C) Öfke', 'D) Haset'],
+                answer: 'B'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Farklılıklara anlayışla yaklaşmak ve kusurları büyütmeden affedici olmak hangi kavramdır?',
+                options: ['A) Hoşgörü', 'B) Taassup', 'C) Çekememezlik', 'D) Alay'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'İnsanın kendi iç dünyasını ve kötü arzularını olgunlaştırmasına ne ad verilir?',
+                options: ['A) Nefis Terbiyesi', 'B) Gösteriş', 'C) İftira', 'D) Şikâyet'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Canlılara şefkatle yaklaşmak ve acılarına ortak olmak hangi ahlaki değerdir?',
+                options: ['A) Merhamet', 'B) Katılık', 'C) Öfke', 'D) Bencillik'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: 'Başkalarının haklarına, sınırlarına ve kişiliğine değer vermeye ne ad verilir?',
+                options: ['A) Saygı', 'B) İhmal', 'C) Zorbalık', 'D) Alaycılık'],
+                answer: 'A'
+            },
+            {
+                kind: 'mc',
+                typeLabel: 'Çoktan Seçmeli',
+                text: '"Bizi aldatan bizden değildir." hadisi en çok aşağıdaki davranışlardan hangisini yasaklar?',
+                options: ['A) Yardımlaşmayı', 'B) Hile ve sahtekârlığı', 'C) Selamlaşmayı', 'D) Sabrı'],
+                answer: 'B'
+            },
+            // Doğru / Yanlış Soruları (tf)
+            {
+                kind: 'tf',
+                typeLabel: 'Doğru / Yanlış',
+                text: '(   ) Dijital ortamda bize hakaret eden birine aynı sertlikte hakaret etmek özdenetim göstergesidir.',
+                options: null,
+                answer: 'Yanlış'
+            },
+            {
+                kind: 'tf',
+                typeLabel: 'Doğru / Yanlış',
+                text: '(   ) Başkasının özel mesajını izinsiz paylaşmamak mahremiyete ve kul hakkına saygıdır.',
+                options: null,
+                answer: 'Doğru'
+            },
+            {
+                kind: 'tf',
+                typeLabel: 'Doğru / Yanlış',
+                text: '(   ) Özdenetim sadece öfkeyi tutmak değil, yanlış bir topluluk baskısına "hayır" diyebilmektir.',
+                options: null,
+                answer: 'Doğru'
+            },
+            {
+                kind: 'tf',
+                typeLabel: 'Doğru / Yanlış',
+                text: '(   ) Kimse görmediği sürece sınavda başkasının kâğıdından kontrol yapmak helal emeğe uygundur.',
+                options: null,
+                answer: 'Yanlış'
+            },
+            {
+                kind: 'tf',
+                typeLabel: 'Doğru / Yanlış',
+                text: '(   ) Her davranışta aşırılıktan kaçınıp dengeyi gözetmek ölçülülük ilkesinin gereğidir.',
+                options: null,
+                answer: 'Doğru'
+            },
+            {
+                kind: 'tf',
+                typeLabel: 'Doğru / Yanlış',
+                text: '(   ) Oyun veya maç sırasında sinirlenip takımı yarı yolda bırakmak sorumluluk bilincine uygundur.',
+                options: null,
+                answer: 'Yanlış'
+            },
+            // Boşluk Doldurma Soruları (fill)
+            {
+                kind: 'fill',
+                typeLabel: 'Boşluk Doldurma',
+                text: 'Kişinin öfke anında nefsine hâkim olarak duygularını kontrol edebilmesine ......................... denir.',
+                options: null,
+                answer: 'ÖZDENETİM'
+            },
+            {
+                kind: 'fill',
+                typeLabel: 'Boşluk Doldurma',
+                text: 'İnsanın zorluklar ve tahrikler karşısında aceleci ve öfkeli davranmayıp metanet göstermesine ......................... denir.',
+                options: null,
+                answer: 'SABIR'
+            },
+            {
+                kind: 'fill',
+                typeLabel: 'Boşluk Doldurma',
+                text: 'Sözünde ve işinde dosdoğru olmaya, yalan ve hileden uzak durmaya ......................... denir.',
+                options: null,
+                answer: 'DÜRÜSTLÜK / DOĞRULUK'
+            },
+            {
+                kind: 'fill',
+                typeLabel: 'Boşluk Doldurma',
+                text: 'Hak sahibine hakkını vermeye ve herkese hakkaniyetli davranmaya ......................... denir.',
+                options: null,
+                answer: 'ADALET'
+            },
+            {
+                kind: 'fill',
+                typeLabel: 'Boşluk Doldurma',
+                text: 'Başkalarının özel hayatına ve kişisel bilgilerine saygı göstermeye ......................... denir.',
+                options: null,
+                answer: 'MAHREMİYET'
+            },
+            // Kısa Cevaplı / Açık Uçlu Sorular (open)
+            {
+                kind: 'open',
+                typeLabel: 'Kısa Cevaplı',
+                text: 'Bir arkadaşınız dijital ortamda sizinle alay ettiğinde vakur bir duruş sergilemek için ne yapmalısınız? Kısaca yazınız.',
+                options: null,
+                answer: 'Öfkeye kapılmadan özelden nazikçe uyarmak'
+            },
+            {
+                kind: 'open',
+                typeLabel: 'Kısa Cevaplı',
+                text: 'Özdenetim sahibi bir öğrencinin okul hayatında sergileyeceği iki olumlu davranışı yazınız.',
+                options: null,
+                answer: 'Sınavda dürüst olmak, arkadaşlarına saygılı davranmak'
+            },
+            {
+                kind: 'open',
+                typeLabel: 'Kısa Cevaplı',
+                text: 'Öfke anında nefsini terbiye etmenin bireye ve topluma sağladığı bir faydayı yazınız.',
+                options: null,
+                answer: 'Kırgınlıkları önler, huzur ve güven ortamı oluşturur'
+            },
+            {
+                kind: 'open',
+                typeLabel: 'Kısa Cevaplı',
+                text: 'Sınavda kimsenin görmediği bir anda kopyadan uzak durmayı "ihsan" kavramıyla ilişkilendirerek açıklayınız.',
+                options: null,
+                answer: 'Allah’ın her an gördüğü bilinciyle dürüst kalmaktır'
+            }
+        ];
+
+        const examSchoolInput = document.getElementById('examSchoolInput');
+        const examTitleInput = document.getElementById('examTitleInput');
+        const showAnswerKeyCheck = document.getElementById('showAnswerKeyCheck');
+        const totalQuestionsPill = document.getElementById('totalQuestionsPill');
+        const previewSchool = document.getElementById('previewSchool');
+        const previewTitle = document.getElementById('previewTitle');
+        const examQuestionsGrid = document.getElementById('examQuestionsGrid');
+        const answerKeyBox = document.getElementById('answerKeyBox');
+        const answerKeyList = document.getElementById('answerKeyList');
+
+        function shuffleCopy(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        const KIND_ORDER = ['mc', 'tf', 'fill', 'open'];
+        const examConfig = {
+            mc: { enabled: true, count: 6, max: 15 },
+            tf: { enabled: true, count: 3, max: 6 },
+            fill: { enabled: true, count: 2, max: 5 },
+            open: { enabled: true, count: 2, max: 4 }
+        };
+
+        let shuffledPools = {
+            mc: [],
+            tf: [],
+            fill: [],
+            open: []
+        };
+
+        function reshufflePools() {
+            KIND_ORDER.forEach(kind => {
+                shuffledPools[kind] = shuffleCopy(EXAM_BANK.filter(q => q.kind === kind));
+            });
+        }
+
+        function renderExamSheet() {
+            previewSchool.textContent = examSchoolInput.value.trim() || 'OKUL ADI';
+            previewTitle.textContent = examTitleInput.value.trim() || 'DKAB Yazılı Sınavı';
+
+            const selected = [];
+            KIND_ORDER.forEach(kind => {
+                const cfg = examConfig[kind];
+                const countEl = document.getElementById(`count-${kind}`);
+                const rowEl = document.querySelector(`.type-mixer-row[data-kind="${kind}"]`);
+                if (countEl) countEl.textContent = cfg.count;
+                if (rowEl) rowEl.classList.toggle('disabled', !cfg.enabled || cfg.count === 0);
+
+                if (cfg.enabled && cfg.count > 0) {
+                    selected.push(...shuffledPools[kind].slice(0, cfg.count));
+                }
+            });
+
+            totalQuestionsPill.textContent = `Toplam: ${selected.length} Soru`;
+            examQuestionsGrid.innerHTML = '';
+            answerKeyList.innerHTML = '';
+
+            if (selected.length === 0) {
+                examQuestionsGrid.innerHTML = '<p style="grid-column: 1 / -1; color: #64748B; font-weight: 700;">Sol panelden en az bir soru türü seçip sayısını artırınız.</p>';
+            } else {
+                selected.forEach((q, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'exam-q-card';
+
+                    let inner = `<span class="exam-q-type">${idx + 1}. Soru • ${q.typeLabel}</span>`;
+                    inner += `<p class="exam-q-text">${q.text}</p>`;
+
+                    if (q.options) {
+                        inner += `<div class="exam-q-options">${q.options.map(opt => `<span>${opt}</span>`).join('')}</div>`;
+                    } else if (q.kind === 'open') {
+                        inner += `<div class="exam-q-answer-line"></div>`;
+                    }
+
+                    card.innerHTML = inner;
+                    examQuestionsGrid.appendChild(card);
+
+                    const ansItem = document.createElement('span');
+                    ansItem.textContent = `${idx + 1}) ${q.answer}`;
+                    answerKeyList.appendChild(ansItem);
+                });
+            }
+
+            answerKeyBox.classList.toggle('visible', showAnswerKeyCheck.checked);
+        }
+
+        // Çoklu tür seçimi ve +/- sayı ayarlama olayları (anında sağ alana yansır)
+        document.querySelectorAll('.kind-check').forEach(chk => {
+            chk.addEventListener('change', (e) => {
+                const kind = e.target.dataset.kind;
+                examConfig[kind].enabled = e.target.checked;
+                if (e.target.checked && examConfig[kind].count === 0) {
+                    examConfig[kind].count = 1;
+                }
+                renderExamSheet();
+            });
+        });
+
+        document.querySelectorAll('.stepper-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const kind = e.currentTarget.dataset.kind;
+                const delta = Number(e.currentTarget.dataset.delta);
+                const cfg = examConfig[kind];
+                const next = Math.max(0, Math.min(cfg.max, cfg.count + delta));
+                cfg.count = next;
+                const chk = document.querySelector(`.kind-check[data-kind="${kind}"]`);
+                if (next > 0 && !cfg.enabled) {
+                    cfg.enabled = true;
+                    if (chk) chk.checked = true;
+                } else if (next === 0 && cfg.enabled) {
+                    cfg.enabled = false;
+                    if (chk) chk.checked = false;
+                }
+                renderExamSheet();
+            });
+        });
+
+        examSchoolInput.addEventListener('input', () => {
+            previewSchool.textContent = examSchoolInput.value.trim() || 'OKUL ADI';
+        });
+        examTitleInput.addEventListener('input', () => {
+            previewTitle.textContent = examTitleInput.value.trim() || 'DKAB Yazılı Sınavı';
+        });
+        showAnswerKeyCheck.addEventListener('change', () => {
+            answerKeyBox.classList.toggle('visible', showAnswerKeyCheck.checked);
+        });
+        document.getElementById('generateExamBtn').addEventListener('click', () => {
+            reshufflePools();
+            renderExamSheet();
+        });
+        document.getElementById('printExamBtn').addEventListener('click', () => window.print());
+
+        // Başlangıç verilerini oluştur
+        renderPuzzle();
+        reshufflePools();
+        renderExamSheet();
+    
+
+    /* ========================================================================
+       MAARİFİN KALBİNDE OYUN: KATILIM MODU & 2-10 GRUP YARIŞMASI STANDARDI
+       ======================================================================== */
+    (function initMaarif2To10GroupStandard() {
+      // Eğer sayfada zaten yerel #tab-individual ve #input-group-count varsa sadece 2-10 sınırını garanti et
+      if (document.getElementById('tab-individual') && document.getElementById('input-group-count')) {
+        const inp = document.getElementById('input-group-count');
+        inp.min = '2';
+        inp.max = '10';
+        return;
+      }
+
+      const gState = {
+        playType: 'individual', // 'individual' | 'groups'
+        groupCount: 2,
+        groups: [
+          { id: 1, name: '1. Grup', score: 0, step: 0 },
+          { id: 2, name: '2. Grup', score: 0, step: 0 }
+        ],
+        activeGroupIndex: 0,
+        lastObservedScore: 0,
+        scoredThisQuestion: false
+      };
+
+      function escapeHtmlSafe(str) {
+        return String(str || '').replace(/[&<>"']/g, m => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+      }
+
+      function syncGroupsCount(newCount) {
+        const parsed = parseInt(newCount, 10);
+        const clamped = Number.isNaN(parsed) ? 2 : Math.max(2, Math.min(10, parsed));
+        gState.groupCount = clamped;
+        const inp = document.getElementById('input-group-count');
+        if (inp) inp.value = String(clamped);
+
+        while (gState.groups.length < clamped) {
+          const nextNum = gState.groups.length + 1;
+          gState.groups.push({ id: nextNum, name: `${nextNum}. Grup`, score: 0, step: 0 });
+        }
+        if (gState.groups.length > clamped) {
+          gState.groups.length = clamped;
+        }
+        renderGroupSetupInputs();
+        syncToNativeGroupEngineIfPresent();
+      }
+
+      function renderGroupSetupInputs() {
+        const container = document.getElementById('group-names-container');
+        if (!container) return;
+        container.innerHTML = '';
+        gState.groups.forEach((grp, idx) => {
+          const inp = document.createElement('input');
+          inp.type = 'text';
+          inp.className = 'group-name-input';
+          inp.value = grp.name;
+          inp.placeholder = `${idx + 1}. Grup`;
+          inp.setAttribute('aria-label', `${idx + 1}. Grup Adı`);
+          inp.addEventListener('input', () => {
+            const val = inp.value.trim();
+            grp.name = val || `${idx + 1}. Grup`;
+            syncToNativeGroupEngineIfPresent();
+          });
+          inp.addEventListener('blur', () => {
+            if (!inp.value.trim()) {
+              grp.name = `${idx + 1}. Grup`;
+              inp.value = grp.name;
+              syncToNativeGroupEngineIfPresent();
+            }
+          });
+          container.appendChild(inp);
+        });
+      }
+
+      function getNativeSetupGrid() {
+        return document.getElementById('group-inputs-grid')
+          || document.getElementById('groups-input-grid')
+          || document.getElementById('groupInputsGrid')
+          || document.getElementById('group-inputs-list');
+      }
+
+      function syncToNativeGroupEngineIfPresent() {
+        if (gState.playType !== 'groups') return;
+        const count = gState.groups.length;
+        try { if (typeof State !== 'undefined' && State) State.groupCount = count; } catch (e) {}
+        try { if (typeof state !== 'undefined' && state) state.groupCount = count; } catch (e) {}
+        try { if (typeof selectedGroupCount !== 'undefined') selectedGroupCount = count; } catch (e) {}
+        try { if (typeof groupCount !== 'undefined') groupCount = count; } catch (e) {}
+        try {
+          if (typeof customGroupNames !== 'undefined' && Array.isArray(customGroupNames)) {
+            customGroupNames.length = 0;
+            gState.groups.forEach(g => customGroupNames.push(g.name));
+          }
+        } catch (e) {}
+
+        const nativeGrid = getNativeSetupGrid();
+        if (nativeGrid) {
+          nativeGrid.innerHTML = '';
+          gState.groups.forEach((g, idx) => {
+            const wrap = document.createElement('div');
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.className = 'group-name-input';
+            inp.value = g.name;
+            inp.dataset.groupIdx = String(idx);
+            wrap.appendChild(inp);
+            nativeGrid.appendChild(wrap);
+          });
+        }
+      }
+
+      function setPlayType(type) {
+        gState.playType = type;
+        const isGroups = type === 'groups';
+        const tabInd = document.getElementById('tab-individual');
+        const tabGrp = document.getElementById('tab-groups');
+        const panel = document.getElementById('group-setup-panel');
+        if (tabInd) {
+          tabInd.classList.toggle('selected', !isGroups);
+          tabInd.setAttribute('aria-pressed', String(!isGroups));
+        }
+        if (tabGrp) {
+          tabGrp.classList.toggle('selected', isGroups);
+          tabGrp.setAttribute('aria-pressed', String(isGroups));
+        }
+        if (panel) panel.hidden = !isGroups;
+
+        // Eğer dosyada önceki bireysel/grup butonları varsa senkronize et
+        const oldBtnG = document.getElementById('btn-mode-group');
+        const oldBtnI = document.getElementById('btn-mode-individual');
+        if (isGroups && oldBtnG) oldBtnG.click();
+        if (!isGroups && oldBtnI) oldBtnI.click();
+
+        if (isGroups) {
+          syncGroupsCount(gState.groupCount);
+        }
+        renderGroupsScoreboard();
+      }
+
+      function renderGroupsScoreboard() {
+        const strip = document.getElementById('groups-scoreboard-strip');
+        if (!strip) return;
+        if (gState.playType !== 'groups') {
+          strip.hidden = true;
+          return;
+        }
+        strip.hidden = false;
+        const activeGroup = gState.groups[gState.activeGroupIndex] || gState.groups[0];
+        const turnText = document.getElementById('group-turn-text');
+        if (activeGroup && turnText) {
+          turnText.textContent = `Sıra: ${activeGroup.name}`;
+        }
+
+        const row = document.getElementById('groups-cards-row');
+        if (!row) return;
+        row.innerHTML = '';
+        gState.groups.forEach((grp, idx) => {
+          const card = document.createElement('div');
+          const isTurn = idx === gState.activeGroupIndex;
+          card.className = `group-score-card ${isTurn ? 'active-turn' : ''}`;
+          card.innerHTML = `
+            <span class="group-card-name">${isTurn ? '▶ ' : ''}${escapeHtmlSafe(grp.name)}</span>
+            <span class="group-card-pts">${grp.score} Puan (${grp.step} Adım)</span>
+          `;
+          row.appendChild(card);
+        });
+      }
+
+      function advanceGroupTurn() {
+        if (gState.playType !== 'groups' || gState.groups.length === 0) return;
+        gState.activeGroupIndex = (gState.activeGroupIndex + 1) % gState.groups.length;
+        gState.scoredThisQuestion = false;
+        renderGroupsScoreboard();
+      }
+
+      function readCurrentGameTotalScore() {
+        try { if (typeof state !== 'undefined' && state && typeof state.totalScore === 'number') return state.totalScore; } catch (e) {}
+        try { if (typeof state !== 'undefined' && state && typeof state.score === 'number') return state.score; } catch (e) {}
+        try { if (typeof State !== 'undefined' && State && typeof State.score === 'number') return State.score; } catch (e) {}
+        try { if (typeof score === 'number') return score; } catch (e) {}
+        try { if (typeof totalScore === 'number') return totalScore; } catch (e) {}
+        const scoreEl = document.querySelector('#total-score-box, #score-display, #score, #hud-score, #current-score, #stat-score, #scoreVal, #score-val, [id*="score"]');
+        if (scoreEl) {
+          const m = (scoreEl.textContent || '').match(/-?\d+/);
+          if (m) return parseInt(m[0], 10);
+        }
+        return null;
+      }
+
+      function renderEndOfGameGroupRanking(targetContainer) {
+        if (gState.playType !== 'groups' || gState.groups.length === 0 || !targetContainer) return;
+        let box = targetContainer.querySelector('#maarif-group-result-box');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'maarif-group-result-box';
+          box.className = 'maarif-group-result-box';
+          targetContainer.appendChild(box);
+        }
+
+        const sortedGroups = [...gState.groups].sort((a, b) => (b.score - a.score) || (b.step - a.step));
+        box.innerHTML = '';
+        sortedGroups.forEach((grp, idx) => {
+          const row = document.createElement('div');
+          const isWinner = idx === 0;
+          row.className = `maarif-leader-row ${isWinner ? 'top-1' : ''}`;
+          const medal = idx === 0 ? '🥇 1.' : idx === 1 ? '🥈 2.' : idx === 2 ? '🥉 3.' : `${idx + 1}.`;
+          const badge = isWinner ? ' 🏆 BİRİNCİ GRUP' : '';
+          row.innerHTML = `
+            <span>${medal} ${escapeHtmlSafe(grp.name)}${badge}</span>
+            <span>${grp.score} Puan (${grp.step} Adım)</span>
+          `;
+          box.appendChild(row);
+        });
+      }
+
+      function mountStandardUI() {
+        if (document.getElementById('tab-groups')) return;
+
+        // 1. Giriş ekranındaki başlat butonunu veya kurulum kartını bul
+        const startBtn = document.querySelector(
+          '#btn-start-game, #startGameBtn, #btn-start-competition, #start-btn, #startBtn, [onclick*="startGame"], [onclick*="startCompetition"], [onclick*="startNewGame"], .btn-hero, button[id*="start" i]'
+        );
+        const homeScreen = document.querySelector(
+          '#screen-home, #home-screen, #homeScreen, #screenHome, #screen-start, #start-screen, #startScreen, #screen-setup, #setup-screen, #setupScreen, #intro-screen, #introScreen, #gradeSelectionScreen, #screen-menu, section.active, .screen.active'
+        );
+
+        const playTypeBox = document.createElement('div');
+        playTypeBox.className = 'play-type-box';
+        playTypeBox.setAttribute('aria-label', 'Oyun Katılım Türü ve Grup Ayarları');
+        playTypeBox.innerHTML = `
+          <div class="play-type-top">
+            <span style="font-weight: 900; font-size: clamp(0.88rem, 1.08vw, 1.22rem); color: #fbbf24;">
+              🎮 Katılım Modu Seçin:
+            </span>
+            <div class="play-type-tabs" role="radiogroup" aria-label="Bireysel veya Çoklu Grup">
+              <button type="button" class="play-tab-btn selected" id="tab-individual" aria-pressed="true">
+                👤 Bireysel / Sınıfça
+              </button>
+              <button type="button" class="play-tab-btn" id="tab-groups" aria-pressed="false">
+                🏆 Çoklu Grup Yarışması (2-10 Grup)
+              </button>
+            </div>
+          </div>
+
+          <div class="group-setup-panel" id="group-setup-panel" hidden>
+            <div class="group-count-row">
+              <label for="input-group-count">Grup Sayısı (2 - 10):</label>
+              <div class="group-counter-controls">
+                <button type="button" class="qty-btn" id="btn-group-minus" aria-label="Grup Sayısını Azalt">−</button>
+                <input type="number" class="group-count-input" id="input-group-count" min="2" max="10" value="2" />
+                <button type="button" class="qty-btn" id="btn-group-plus" aria-label="Grup Sayısını Artır">+</button>
+              </div>
+              <span style="font-size: clamp(0.76rem, 0.92vw, 1.04rem); color: #cbd5e1; font-weight: 700;">
+                (Grup isimlerine tıklayarak düzenleyebilirsiniz)
+              </span>
+            </div>
+            <div class="group-names-grid" id="group-names-container" aria-label="Grup İsimleri"></div>
+          </div>
+        `;
+
+        const nativeGrid = getNativeSetupGrid();
+        if (nativeGrid && nativeGrid.parentElement) {
+          nativeGrid.parentElement.insertBefore(playTypeBox, nativeGrid);
+        } else if (startBtn && startBtn.parentElement) {
+          startBtn.parentElement.parentElement.insertBefore(playTypeBox, startBtn.parentElement);
+        } else if (homeScreen) {
+          homeScreen.appendChild(playTypeBox);
+        }
+
+        // 2. Oyun ekranına #groups-scoreboard-strip yerleştir
+        const gameScreen = document.querySelector(
+          '#screen-game, #game-screen, #gameScreen, #screenGame, #quiz-screen, #quizScreen, #gamePlayScreen, [id*="game-screen"], [id*="screen-game"], [id*="gameScreen"]'
+        );
+        if (!document.getElementById('groups-scoreboard-strip')) {
+          const strip = document.createElement('div');
+          strip.className = 'groups-scoreboard-strip';
+          strip.id = 'groups-scoreboard-strip';
+          strip.setAttribute('aria-label', 'Grup Sıra ve Skor Tablosu');
+          strip.hidden = true;
+          strip.innerHTML = `
+            <div class="turn-indicator-badge" id="group-turn-indicator">
+              <span aria-hidden="true">🚩</span>
+              <span id="group-turn-text">Sıra: 1. Grup</span>
+            </div>
+            <div class="groups-cards-row" id="groups-cards-row"></div>
+          `;
+          if (gameScreen) {
+            const firstHeader = gameScreen.querySelector('header, .top-bar, .status-strip');
+            if (firstHeader && firstHeader.nextSibling) {
+              firstHeader.parentElement.insertBefore(strip, firstHeader.nextSibling);
+            } else {
+              gameScreen.insertBefore(strip, gameScreen.firstChild);
+            }
+          } else {
+            document.body.insertBefore(strip, document.body.firstChild);
+          }
+        }
+
+        // Olay Dinleyicileri
+        document.getElementById('tab-individual').addEventListener('click', () => setPlayType('individual'));
+        document.getElementById('tab-groups').addEventListener('click', () => setPlayType('groups'));
+
+        document.getElementById('btn-group-minus').addEventListener('click', () => {
+          syncGroupsCount(gState.groupCount - 1);
+        });
+        document.getElementById('btn-group-plus').addEventListener('click', () => {
+          syncGroupsCount(gState.groupCount + 1);
+        });
+        document.getElementById('input-group-count').addEventListener('input', (e) => {
+          const val = parseInt(e.target.value, 10);
+          if (!Number.isNaN(val) && val >= 2 && val <= 10) {
+            syncGroupsCount(val);
+          }
+        });
+        document.getElementById('input-group-count').addEventListener('change', (e) => {
+          syncGroupsCount(e.target.value);
+        });
+
+        renderGroupSetupInputs();
+
+        // Oyun başlatıldığında grupları sıfırla ve 1. gruptan başlat
+        document.addEventListener('click', (e) => {
+          const btn = e.target.closest(
+            '#btn-start-game, #startGameBtn, #btn-start-competition, #start-btn, #startBtn, [onclick*="startGame"], [onclick*="startCompetition"], [onclick*="startNewGame"], button[id*="start" i]'
+          );
+          if (btn && gState.playType === 'groups') {
+            syncGroupsCount(document.getElementById('input-group-count').value);
+            gState.groups.forEach((g, idx) => {
+              g.name = (g.name || '').trim() || `${idx + 1}. Grup`;
+              g.score = 0;
+              g.step = 0;
+            });
+            gState.activeGroupIndex = 0;
+            gState.scoredThisQuestion = false;
+            gState.lastObservedScore = readCurrentGameTotalScore() || 0;
+            syncToNativeGroupEngineIfPresent();
+            renderGroupsScoreboard();
+          }
+        }, true);
+
+        // Cevap ve Sonraki Soru tıklamalarını takip et
+        document.addEventListener('click', (e) => {
+          if (gState.playType !== 'groups') return;
+
+          // Sonraki soru/adım butonuna tıklandığında sırayı otomatik sonraki gruba devret
+          const nextBtn = e.target.closest(
+            '#btn-next-question, #btn-next, #nextQuestionBtn, #next-btn, [id*="next"], [onclick*="next"]'
+          );
+          if (nextBtn) {
+            setTimeout(() => {
+              gState.lastObservedScore = readCurrentGameTotalScore() || gState.lastObservedScore;
+              advanceGroupTurn();
+            }, 80);
+            return;
+          }
+
+          // Doğru cevap verildiğinde puan artışını aktif gruba işle
+          setTimeout(() => {
+            const currentTotal = readCurrentGameTotalScore();
+            if (currentTotal !== null && currentTotal > gState.lastObservedScore) {
+              const delta = currentTotal - gState.lastObservedScore;
+              gState.lastObservedScore = currentTotal;
+              const activeGrp = gState.groups[gState.activeGroupIndex];
+              if (activeGrp) {
+                activeGrp.score += delta;
+                activeGrp.step += 1;
+                gState.scoredThisQuestion = true;
+                renderGroupsScoreboard();
+              }
+            }
+          }, 120);
+        });
+
+        // Sonuç ekranı açıldığında 🥇 1. [Grup Adı] 🏆 BİRİNCİ GRUP sıralamasını göster
+        const resultScreens = document.querySelectorAll(
+          '#screen-result, #result-screen, #screen-podium, #screen-summary, #end-screen, [id*="result"]'
+        );
+        const observer = new MutationObserver(() => {
+          if (gState.playType !== 'groups') return;
+          resultScreens.forEach(rs => {
+            const isVisible = rs.classList.contains('active') || (!rs.classList.contains('hidden') && rs.offsetParent !== null);
+            if (isVisible) {
+              const card = rs.querySelector('.result-card, .podium-card, .summary-card') || rs;
+              renderEndOfGameGroupRanking(card);
+            }
+          });
+        });
+        resultScreens.forEach(rs => {
+          observer.observe(rs, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountStandardUI);
+      } else {
+        mountStandardUI();
+      }
+    })();
+
+  
+
+    
+
+  
+
+    /* ========================================================================
+       ANA SAYFA (KARŞILAMA EKRANI) SIFIR TAŞMA VE OTOMATİK SIĞDIRMA MOTORU V2
+       ======================================================================== */
+    (function initHomeScreenZeroOverflowEngineV2() {
+      const HOME_SELECTORS = [
+        '#screen-home', '#home-screen', '#homeScreen', '#screenHome',
+        '#screen-start', '#start-screen', '#startScreen', '#screenStart',
+        '#screen-setup', '#setup-screen', '#setupScreen', '#screenSetup',
+        '#intro-screen', '#introScreen', '#welcome-screen', '#welcomeScreen',
+        '#gradeSelectionScreen', '#screen-menu', '#menuScreen'
+      ];
+
+      const GAME_OR_RESULT_IDS = new Set([
+        'screen-game', 'game-screen', 'gameScreen', 'screenGame', 'quiz-screen', 'quizScreen', 'gamePlayScreen',
+        'screen-result', 'result-screen', 'resultScreen', 'screenResult', 'screen-podium', 'screen-summary', 'end-screen'
+      ]);
+
+      let cachedInitialHome = null;
+
+      function isVisible(el) {
+        if (!el || el.nodeType !== 1) return false;
+        const st = window.getComputedStyle(el);
+        if (st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity) === 0) return false;
+        if (el.classList.contains('hidden') || el.hasAttribute('hidden')) return false;
+        return el.offsetWidth > 0 && el.offsetHeight > 0;
+      }
+
+      function getActiveHomeScreen() {
+        for (const sel of HOME_SELECTORS) {
+          const el = document.querySelector(sel);
+          if (el && isVisible(el)) return el;
+        }
+        if (cachedInitialHome && isVisible(cachedInitialHome)) {
+          return cachedInitialHome;
+        }
+        const startBtn = document.querySelector(
+          '#btn-start-game, #startGameBtn, #btn-start-competition, #start-btn, #startBtn, [onclick*="startGame"], [onclick*="startCompetition"], [onclick*="startNewGame"], .btn-hero, button[id*="start" i]'
+        );
+        if (startBtn && isVisible(startBtn)) {
+          const sec = startBtn.closest('section, .screen, [id*="screen" i], [id*="home" i], [id*="start" i], main');
+          if (sec && !GAME_OR_RESULT_IDS.has(sec.id) && isVisible(sec)) {
+            cachedInitialHome = sec;
+            return sec;
+          }
+        }
+        const activeScreen = document.querySelector('.screen.active, section.active');
+        if (activeScreen && !GAME_OR_RESULT_IDS.has(activeScreen.id) && isVisible(activeScreen)) {
+          cachedInitialHome = activeScreen;
+          return activeScreen;
+        }
+        return null;
+      }
+
+      const SCROLLABLE_ALLOW_IDS = new Set([
+        'group-names-container', 'bireysel-student-chips', 'bireysel-bulk-input', 'bireysel-setup-panel'
+      ]);
+
+      function getOverflowingElements(home) {
+        const list = [];
+        const vh = window.innerHeight || 1080;
+
+        if (document.documentElement.scrollHeight > vh + 3 || document.body.scrollHeight > vh + 3) {
+          list.push(home);
+        }
+        if (home.scrollHeight > home.clientHeight + 2) {
+          list.push(home);
+        }
+
+        // Home içindeki tüm görünür kutuları kontrol et (iç scroll veya kırpılma yapan kartlar dahil)
+        const allBoxes = home.querySelectorAll('div, aside, section, main, article, ul, ol');
+        allBoxes.forEach(box => {
+          if (!isVisible(box) || SCROLLABLE_ALLOW_IDS.has(box.id)) return;
+          if (box.closest('#group-setup-panel, #bireysel-setup-panel')) return;
+          const cs = window.getComputedStyle(box);
+          // justify-content: center dikey taşmada üstteki başlığı kestiği için düzelt
+          if (cs.display.includes('flex') && cs.flexDirection === 'column' && cs.justifyContent === 'center') {
+            if (box.scrollHeight > box.clientHeight + 2) {
+              box.style.justifyContent = 'flex-start';
+            }
+          }
+          if (box.clientHeight > 20 && box.scrollHeight > box.clientHeight + 3) {
+            list.push(box);
+          }
+        });
+
+        // En alttaki buton/footer ekran dışına sarkıyor mu kontrol et
+        const bottomChecks = home.querySelectorAll(
+          'footer, .home-footer, .home-controls, .start-controls, #btn-start-game, #startGameBtn, .play-type-box'
+        );
+        bottomChecks.forEach(el => {
+          if (!isVisible(el)) return;
+          const r = el.getBoundingClientRect();
+          if (r.bottom > vh - 2) {
+            list.push(home);
+          }
+        });
+
+        return list;
+      }
+
+      function saveOriginalStyles(home) {
+        if (home.dataset.homeOrigSaved === '1') return;
+        home.dataset.homeOrigSaved = '1';
+        home.dataset.origInlineStyle = home.getAttribute('style') || '';
+        home.querySelectorAll('*').forEach(el => {
+          el.dataset.origInlineStyle = el.getAttribute('style') || '';
+        });
+      }
+
+      function restoreOriginalStyles(home) {
+        if (home.dataset.homeOrigSaved !== '1') return;
+        const restoreOne = (el) => {
+          const orig = el.dataset.origInlineStyle;
+          if (orig === undefined) return;
+          if (el.id === 'group-setup-panel') {
+            const h = el.hidden;
+            if (orig === '') el.removeAttribute('style');
+            else el.setAttribute('style', orig);
+            el.hidden = h;
+          } else {
+            if (orig === '') el.removeAttribute('style');
+            else el.setAttribute('style', orig);
+          }
+        };
+        restoreOne(home);
+        home.querySelectorAll('*').forEach(restoreOne);
+      }
+
+      function shrinkSubtreeMetrics(root, factor) {
+        const nodes = [root, ...root.querySelectorAll(
+          'h1, h2, h3, h4, p, span, li, button, label, input, div, aside, section, ol, ul'
+        )];
+        const snap = [];
+        nodes.forEach(el => {
+          if (!isVisible(el)) return;
+          const cs = window.getComputedStyle(el);
+          snap.push({
+            el,
+            fs: parseFloat(cs.fontSize) || 0,
+            pt: parseFloat(cs.paddingTop) || 0,
+            pb: parseFloat(cs.paddingBottom) || 0,
+            mt: parseFloat(cs.marginTop) || 0,
+            mb: parseFloat(cs.marginBottom) || 0,
+            rg: parseFloat(cs.rowGap) || 0,
+            cg: parseFloat(cs.columnGap) || 0
+          });
+        });
+
+        snap.forEach(s => {
+          if (s.fs > 10.5) s.el.style.fontSize = Math.max(10.5, s.fs * factor).toFixed(2) + 'px';
+          if (s.pt > 1) s.el.style.paddingTop = Math.max(1, s.pt * factor * 0.92).toFixed(2) + 'px';
+          if (s.pb > 1) s.el.style.paddingBottom = Math.max(1, s.pb * factor * 0.92).toFixed(2) + 'px';
+          if (s.mt > 1) s.el.style.marginTop = Math.max(0, s.mt * factor * 0.88).toFixed(2) + 'px';
+          if (s.mb > 1) s.el.style.marginBottom = Math.max(0, s.mb * factor * 0.88).toFixed(2) + 'px';
+          if (s.rg > 1) s.el.style.rowGap = Math.max(1, s.rg * factor * 0.88).toFixed(2) + 'px';
+          s.el.style.lineHeight = '1.2';
+        });
+      }
+
+      function fitHomeScreenToViewport() {
+        const home = getActiveHomeScreen();
+        if (!home) return;
+
+        saveOriginalStyles(home);
+        restoreOriginalStyles(home);
+
+        // 1. Tüm metinlerde yatay taşmayı engelle
+        home.querySelectorAll('h1, h2, h3, h4, p, span, button, label, div').forEach(node => {
+          node.style.maxWidth = '100%';
+          node.style.overflowWrap = 'break-word';
+        });
+
+        // 2. Genel karşılama ekranını taşma bitene kadar kademeli sıkılaştır (최대 16 adım)
+        let step = 0;
+        while (step < 16) {
+          const over = getOverflowingElements(home);
+          if (over.length === 0) break;
+          shrinkSubtreeMetrics(home, 0.92);
+          step++;
+        }
+
+        // 3. Eğer belirli bir alt kart (.hero-card, .how-to-play-card, .setup-card vb.) hâlâ taşma yapıyorsa doğrudan o kartı sığdır
+        let cardStep = 0;
+        while (cardStep < 10) {
+          const over = getOverflowingElements(home).filter(el => el !== home);
+          if (over.length === 0) break;
+          over.forEach(box => shrinkSubtreeMetrics(box, 0.90));
+          cardStep++;
+        }
+      }
+
+      function bindUnifiedTabs() {
+        const tabInd = document.getElementById('tab-individual');
+        const tabGrp = document.getElementById('tab-groups');
+        const bireyselPanel = document.getElementById('bireysel-setup-panel');
+
+        if (tabInd && tabGrp && bireyselPanel) {
+          tabInd.addEventListener('click', () => {
+            bireyselPanel.classList.add('visible');
+            scheduleFit();
+          });
+          tabGrp.addEventListener('click', () => {
+            bireyselPanel.classList.remove('visible');
+            scheduleFit();
+          });
+        }
+      }
+
+      function scheduleFit() {
+        requestAnimationFrame(() => {
+          fitHomeScreenToViewport();
+          setTimeout(fitHomeScreenToViewport, 80);
+        });
+      }
+
+      window.addEventListener('resize', scheduleFit);
+      window.addEventListener('load', scheduleFit);
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('#tab-individual, #tab-groups, #btn-group-minus, #btn-group-plus, #bireysel-add-btn, #bireysel-bulk-btn, #bireysel-clear-btn, [id*="home" i], [id*="back" i], [id*="setup" i]')) {
+          scheduleFit();
+        }
+      });
+      document.addEventListener('input', (e) => {
+        if (e.target && e.target.id === 'input-group-count') {
+          scheduleFit();
+        }
+      });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          bindUnifiedTabs();
+          scheduleFit();
+        });
+      } else {
+        bindUnifiedTabs();
+        scheduleFit();
+      }
+    })();
+
+  
+
+    /* ========================================================================
+       ÜST KONTROL ÇUBUĞU: NASIL OYNANIR (SORULARI DÜZENLE SOLUNA), ANA SAYFA & TAM EKRAN
+       ======================================================================== */
+    (function initMaarifTopbarAndHowToModal() {
+      function findTopActionsContainer() {
+        // Tüm ekranlarda görünür olan veya aktif ekranın üst çubuğundaki aksiyon alanını bul
+        const candidates = [
+          document.querySelector('body > header .top-actions'),
+          document.querySelector('body > .top-bar .top-actions'),
+          document.querySelector('.top-actions'),
+          document.querySelector('body > header'),
+          document.querySelector('body > .top-bar'),
+          document.querySelector('#screen-home header > div:last-child'),
+          document.querySelector('#screen-setup header > div:last-child'),
+          document.querySelector('.screen.active header > div:last-child'),
+          document.querySelector('header .flex.items-center'),
+          document.querySelector('.top-bar'),
+          document.querySelector('header')
+        ];
+        for (const c of candidates) {
+          if (c) return c;
+        }
+        return null;
+      }
+
+      function getButtonClassFromBar(bar) {
+        if (!bar) return 'maarif-top-btn';
+        const sampleBtn = bar.querySelector('button:not(.count-btn):not(.play-tab-btn)');
+        if (sampleBtn && sampleBtn.className) {
+          return sampleBtn.className.replace(/\bgold\b|\bbtn-danger\b|\bbtn-primary\b/g, '').trim() || 'maarif-top-btn';
+        }
+        return 'maarif-top-btn';
+      }
+
+      function buildHowToModalContent() {
+        // 1. Eğer sayfada sol tarafta açık duran .how-to-play-card veya benzeri bir kart varsa içeriğini al ve kartı gizle
+        const openCard = document.querySelector('.how-to-play-card, aside[aria-label*="Nasıl" i]');
+        if (openCard) {
+          const clone = openCard.cloneNode(true);
+          const titleEl = clone.querySelector('.how-to-play-title, h2, h3');
+          if (titleEl) titleEl.remove();
+          openCard.style.display = 'none';
+          const parentGrid = openCard.closest('.home-grid');
+          if (parentGrid) parentGrid.style.gridTemplateColumns = '1fr';
+          return clone.innerHTML;
+        }
+
+        // 2. Varsayılan zengin "Nasıl Oynanır?" yönergesi
+        const pageTitle = (document.title || 'Maarifin Kalbinde Oyun').split('|')[0].trim();
+        return `
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="padding:12px 14px;border-radius:12px;background:rgba(30,41,59,0.75);border:1px solid rgba(251,191,36,0.35);">
+              <strong style="color:#fbbf24;">1. Katılım Modu Seçimi:</strong>
+              <p style="margin:4px 0 0;">Giriş ekranından <strong>👤 Bireysel / Sınıfça</strong> veya <strong>🏆 Çoklu Grup Yarışması (2-10 Grup)</strong> modlarından birini seçin.</p>
+            </div>
+            <div style="padding:12px 14px;border-radius:12px;background:rgba(30,41,59,0.75);border:1px solid rgba(251,191,36,0.35);">
+              <strong style="color:#fbbf24;">2. Öğrenci Seçimi ve Grup Sırası:</strong>
+              <p style="margin:4px 0 0;">Bireysel modda akıllı kura ile her öğrenci adil şekilde tahtaya davet edilir. Grup modunda sıra her soruda otomatik olarak bir sonraki gruba geçer.</p>
+            </div>
+            <div style="padding:12px 14px;border-radius:12px;background:rgba(30,41,59,0.75);border:1px solid rgba(251,191,36,0.35);">
+              <strong style="color:#fbbf24;">3. Süreç Odaklı Öğrenme (${pageTitle}):</strong>
+              <p style="margin:4px 0 0;">Soruları dikkatle okuyarak doğru cevabı seçin. Yanlış cevaplarda yapıcı dönüt ve ipuçlarıyla doğru bilgiyi keşfederek ilerleyin.</p>
+            </div>
+          </div>
+        `;
+      }
+
+      function ensureHowToModal() {
+        let backdrop = document.getElementById('maarif-howto-backdrop');
+        if (backdrop) return backdrop;
+
+        const bodyHtml = buildHowToModalContent();
+        backdrop = document.createElement('div');
+        backdrop.id = 'maarif-howto-backdrop';
+        backdrop.className = 'maarif-howto-backdrop';
+        backdrop.innerHTML = `
+          <div class="maarif-howto-modal" role="dialog" aria-modal="true" aria-label="Nasıl Oynanır?">
+            <div class="maarif-howto-header">
+              <h3>📖 Nasıl Oynanır?</h3>
+              <button type="button" class="maarif-howto-close" id="maarif-howto-close-btn">✕ Kapat</button>
+            </div>
+            <div class="maarif-howto-body">${bodyHtml}</div>
+          </div>
+        `;
+        document.body.appendChild(backdrop);
+
+        document.getElementById('maarif-howto-close-btn').addEventListener('click', () => {
+          backdrop.classList.remove('open');
+        });
+        backdrop.addEventListener('click', (e) => {
+          if (e.target === backdrop) backdrop.classList.remove('open');
+        });
+        return backdrop;
+      }
+
+      function goToHomeScreen() {
+        // 1. Eğer sayfada mevcut bir Ana Sayfa / Kuruluma Dön butonu varsa ve görünür/aktifse veya geri dönüş fonksiyonu varsa tetikle
+        if (typeof showScreen === 'function') {
+          try {
+            showScreen('home');
+            const homeEl = document.getElementById('screen-home') || document.getElementById('homeScreen') || document.getElementById('screen-setup');
+            if (homeEl && (homeEl.classList.contains('active') || !homeEl.classList.contains('hidden'))) return;
+          } catch (e) {}
+          try {
+            showScreen('setup');
+            const setupEl = document.getElementById('screen-setup');
+            if (setupEl && setupEl.classList.contains('active')) return;
+          } catch (e) {}
+        }
+
+        const homeTargets = [
+          '#screen-home', '#home-screen', '#homeScreen', '#screenHome',
+          '#screen-start', '#start-screen', '#startScreen', '#screenStart',
+          '#screen-setup', '#setup-screen', '#setupScreen', '#screenSetup',
+          '#intro-screen', '#introScreen', '#welcome-screen', '#welcomeScreen',
+          '#gradeSelectionScreen', '#screen-menu', '#menuScreen'
+        ];
+        let foundHome = null;
+        for (const sel of homeTargets) {
+          const el = document.querySelector(sel);
+          if (el) {
+            foundHome = el;
+            break;
+          }
+        }
+
+        if (foundHome) {
+          document.querySelectorAll('.screen, section[id*="screen" i], div[id*="screen" i], section[id*="Screen"]').forEach(sc => {
+            if (sc === foundHome) {
+              sc.classList.add('active');
+              sc.classList.remove('hidden');
+              sc.removeAttribute('hidden');
+              if (sc.style.display === 'none') sc.style.display = '';
+            } else {
+              sc.classList.remove('active');
+              if (sc.id && (sc.id.toLowerCase().includes('game') || sc.id.toLowerCase().includes('result') || sc.id.toLowerCase().includes('podium') || sc.id.toLowerCase().includes('quiz') || sc.id.toLowerCase().includes('summary'))) {
+                sc.classList.add('hidden');
+              }
+            }
+          });
+          window.dispatchEvent(new Event('resize'));
+        } else {
+          window.location.reload();
+        }
+      }
+
+      function toggleFullscreen(btn) {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().then(() => {
+            if (btn) btn.innerHTML = '🗗 Küçült';
+          }).catch(() => {});
+        } else {
+          document.exitFullscreen().then(() => {
+            if (btn) btn.innerHTML = '⛶ Tam Ekran';
+          }).catch(() => {});
+        }
+      }
+
+      function mountTopbarButtons() {
+        const backdrop = ensureHowToModal();
+        const bar = findTopActionsContainer();
+        if (!bar) return;
+
+        const btnClass = getButtonClassFromBar(bar);
+
+        // Mevcut butonları kontrol et
+        const allBtns = Array.from(document.querySelectorAll('header button, .top-bar button, .top-actions button'));
+        const editQuestionsBtn = allBtns.find(b => /Soruları Düzenle/i.test(b.textContent || '') || b.id === 'openQuestionsBtn');
+        let existingHowToBtn = allBtns.find(b => /Nasıl Oynanır/i.test(b.textContent || '') || /how-to|howto/i.test(b.id || ''));
+        let existingHomeBtn = allBtns.find(b => /Ana Sayfa|Ana Ekran|Kuruluma Dön|Girişe Dön/i.test(b.textContent || '') || /home|back-home/i.test(b.id || ''));
+        let existingFsBtn = allBtns.find(b => /Tam Ekran|Fullscreen/i.test(b.textContent || '') || /fullscreen|fs-btn/i.test(b.id || '') || /Fullscreen/i.test(b.getAttribute('onclick') || '') || /Tam Ekran/i.test(b.getAttribute('title') || '') || /Tam Ekran/i.test(b.getAttribute('aria-label') || ''));
+
+        // 1. "📖 Nasıl Oynanır?" butonu: yoksa oluştur, "Soruları Düzenle" varsa tam soluna yerleştir
+        if (!existingHowToBtn) {
+          const howToBtn = document.createElement('button');
+          howToBtn.type = 'button';
+          howToBtn.id = 'maarif-top-howto-btn';
+          howToBtn.className = btnClass;
+          howToBtn.innerHTML = '📖 Nasıl Oynanır?';
+          howToBtn.addEventListener('click', () => {
+            backdrop.classList.add('open');
+          });
+          if (editQuestionsBtn && editQuestionsBtn.parentElement) {
+            editQuestionsBtn.parentElement.insertBefore(howToBtn, editQuestionsBtn);
+          } else {
+            bar.insertBefore(howToBtn, bar.firstChild);
+          }
+          existingHowToBtn = howToBtn;
+        } else if (editQuestionsBtn && editQuestionsBtn.parentElement === existingHowToBtn.parentElement) {
+          // Zaten varsa bile Soruları Düzenle'nin solunda olduğundan emin ol
+          editQuestionsBtn.parentElement.insertBefore(existingHowToBtn, editQuestionsBtn);
+        }
+
+        // 2. "🏠 Ana Sayfa" butonu: yoksa oluştur
+        if (!existingHomeBtn) {
+          const homeBtn = document.createElement('button');
+          homeBtn.type = 'button';
+          homeBtn.id = 'maarif-top-home-btn';
+          homeBtn.className = btnClass;
+          homeBtn.innerHTML = '🏠 Ana Sayfa';
+          homeBtn.addEventListener('click', goToHomeScreen);
+          bar.appendChild(homeBtn);
+          existingHomeBtn = homeBtn;
+        }
+
+        // 3. "⛶ Tam Ekran" butonu: yoksa oluştur ve Ana Sayfa butonunun hemen yanına yerleştir
+        if (!existingFsBtn) {
+          const fsBtn = document.createElement('button');
+          fsBtn.type = 'button';
+          fsBtn.id = 'maarif-top-fullscreen-btn';
+          fsBtn.className = btnClass;
+          fsBtn.innerHTML = '⛶ Tam Ekran';
+          fsBtn.setAttribute('aria-label', 'Tam Ekran');
+          fsBtn.addEventListener('click', () => toggleFullscreen(fsBtn));
+          document.addEventListener('fullscreenchange', () => {
+            fsBtn.innerHTML = document.fullscreenElement ? '🗗 Küçült' : '⛶ Tam Ekran';
+          });
+
+          if (existingHomeBtn && existingHomeBtn.parentElement) {
+            existingHomeBtn.parentElement.insertBefore(fsBtn, existingHomeBtn.nextSibling);
+          } else {
+            bar.appendChild(fsBtn);
+          }
+        }
+
+        // Sol kart kapandığı için ana ekran sığdırmasını yeniden tetikle
+        window.dispatchEvent(new Event('resize'));
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountTopbarButtons);
+      } else {
+        mountTopbarButtons();
+      }
+    })();
+
+  </script>
+</body>
+</html>

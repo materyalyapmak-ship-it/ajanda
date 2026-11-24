@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maarifin Kalbinde Oyun: Değerler ve Zekâ Atölyesi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        /* A4 Sayfa Şablonu */
+        .a4-sheet {
+            width: 100%;
+            max-width: 210mm;
+            min-height: 297mm;
+            background: #ffffff;
+            margin: 0 auto 24px auto;
+            padding: 14mm;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-after: always;
+            break-after: page;
+        }
+        .a4-sheet:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+        .ws-cell-active {
+            background-color: #fef08a !important;
+            border-color: #eab308 !important;
+            color: #854d0e !important;
+        }
+        .sudoku-box-border-r { border-right: 2.5px solid #0f172a !important; }
+        .sudoku-box-border-b { border-bottom: 2.5px solid #0f172a !important; }
+
+        /* Kutuların İçeriğe Göre Otomatik Esnemesi ve Taşma Önleme */
+        .fit-box {
+            word-break: normal;
+            overflow-wrap: break-word;
+            hyphens: none;
+            line-height: 1.2;
+            min-width: 0;
+        }
+        .auto-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(68px, 1fr));
+        }
+        .auto-grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(56px, 1fr));
+        }
+        .auto-grid-6 {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
+        .auto-grid-10 {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+        }
+        .auto-grid-15 {
+            display: grid;
+            grid-template-columns: repeat(15, minmax(0, 1fr));
+        }
+
+        /* Mihenk Tahta & Grup Yarışması: Ekrana Tam Sığdırma (Taşma Önleme) */
+        @media screen {
+            body.mihenk-board-mode main {
+                max-width: 1280px !important;
+                padding-top: 8px !important;
+                padding-bottom: 8px !important;
+            }
+            body.mihenk-board-mode #sectionPreview > div.no-print {
+                position: static !important;
+                padding: 10px 14px !important;
+                margin-bottom: 10px !important;
+            }
+            body.mihenk-board-mode .a4-sheet {
+                max-width: 100% !important;
+                min-height: 0 !important;
+                height: calc(100vh - 220px) !important;
+                max-height: calc(100vh - 220px) !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                padding: 12px 18px !important;
+                margin: 0 auto !important;
+                border-radius: 14px !important;
+            }
+            body.mihenk-board-mode .board-paper-only {
+                display: none !important;
+            }
+            body.mihenk-board-mode .auto-grid-15,
+            body.mihenk-board-mode .auto-grid-10 {
+                max-width: min(48vh, 92vw) !important;
+            }
+            body.mihenk-board-mode .auto-grid-6 {
+                max-width: min(54vh, 92vw) !important;
+            }
+            body.mihenk-board-mode .auto-grid-15 > div,
+            body.mihenk-board-mode .auto-grid-10 > div {
+                font-size: clamp(9px, 1.35vh, 13px) !important;
+            }
+            body.mihenk-board-mode .a4-sheet h2 {
+                font-size: 1.05rem !important;
+            }
+        }
+
+        /* Yazdırma Kuralları */
+        @media print {
+            @page { size: A4 portrait; margin: 6mm; }
+            body { background: #ffffff !important; margin: 0 !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            #printContainer { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .a4-sheet {
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                padding: 4mm 6mm !important;
+                width: 100% !important;
+                height: 280mm !important;
+                min-height: 0 !important;
+                max-height: 280mm !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+            }
+            input { border: none !important; background: transparent !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Üst Bilgi ve Ana Navigasyon (Yazdırmada Gizlenir) -->
+    <header class="no-print bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-400 text-emerald-950 flex items-center justify-center font-extrabold text-xl shadow-inner shrink-0">
+                    ☪
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight">Maarifin Kalbinde Oyun: Değerler ve Zekâ Atölyesi</h1>
+                    <p class="text-[11px] sm:text-xs text-emerald-200 font-medium">Değerlerle Düşün, Oyunla Öğren • Din Kültürü, TDB, Siyer &amp; Kur'an-ı Kerim</p>
+                </div>
+            </div>
+
+            <!-- Ana Sayfa + 2 Bölüm Sekmeli Geçiş -->
+            <nav class="flex flex-wrap bg-emerald-950/60 p-1 rounded-xl border border-emerald-700/50 gap-1">
+                <button id="tabBtnHome" onclick="switchTab('home')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-amber-400 text-emerald-950 shadow">
+                    🏠 Ana Sayfa
+                </button>
+                <button id="tabBtnSelect" onclick="switchTab('select')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-emerald-100 hover:text-white">
+                    1. Bölüm: Oyun Seç
+                </button>
+                <button id="tabBtnPreview" onclick="switchTab('preview')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-emerald-100 hover:text-white flex items-center gap-1.5">
+                    <span>2. Bölüm: Önizle &amp; Yazdır</span>
+                    <span id="badgeCount" class="bg-emerald-600 text-white text-[11px] px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Bilgilendirme Bildirim Kutusu -->
+    <div id="toastBox" class="no-print fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl text-sm font-medium border border-slate-700"></div>
+
+    <!-- ANA İÇERİK ALANI -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6">
+
+        <!-- 0. BÖLÜM: ANA SAYFA VİTRİNİ -->
+        <section id="sectionHome" class="no-print space-y-6">
+            <div class="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-10 text-white shadow-xl border border-emerald-700 relative overflow-hidden">
+                <div class="max-w-3xl space-y-4 relative z-10">
+                    <span class="inline-block bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+                        ✨ Türkiye Yüzyılı Maarif Modeli Uyumlu Etkinlik Atölyesi
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold leading-tight">
+                        Maarifin Kalbinde Oyun: <span class="text-amber-300">Değerler ve Zekâ Atölyesi</span>
+                    </h2>
+                    <p class="text-sm sm:text-base text-emerald-100 leading-relaxed">
+                        <strong>"Değerlerle Düşün, Oyunla Öğren"</strong> anlayışıyla Din Kültürü ve Ahlak Bilgisi, Temel Dini Bilgiler, Peygamberimizin Hayatı ve Kur'an-ı Kerim dersleri için 33 farklı zekâ oyunu hazırlayın; ister akıllı tahtada <strong>Mihenk</strong> yarışma masasıyla oynatın, ister tek tıkla A4 etkinlik olarak yazdırın.
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-3">
+                        <button onclick="switchTab('select')" class="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 text-sm sm:text-base">
+                            <span>🎮 Etkinlik Oluştur</span>
+                            <span>➔</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 1. BÖLÜM: DERS, SINIF, ÜNİTE VE OYUN SEÇİM EKRANI -->
+        <section id="sectionSelect" class="no-print hidden space-y-5">
+
+            <!-- ADIM 1: DERS SEÇİMİ -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 block mb-2.5">1. Adım: Ders Seçimi</span>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="lessonButtons">
+                    <button data-lesson="dkab" onclick="setLesson('dkab')" class="lesson-btn p-3 rounded-xl border-2 text-left transition font-bold text-sm border-emerald-700 bg-emerald-50 text-emerald-900">
+                        🕌 Din Kültürü
+                    </button>
+                    <button data-lesson="tdb" onclick="setLesson('tdb')" class="lesson-btn p-3 rounded-xl border-2 text-left transition font-bold text-sm border-slate-200 hover:border-emerald-400 text-slate-700">
+                        📿 Temel Dini Bilgiler
+                    </button>
+                    <button data-lesson="siyer" onclick="setLesson('siyer')" class="lesson-btn p-3 rounded-xl border-2 text-left transition font-bold text-sm border-slate-200 hover:border-emerald-400 text-slate-700">
+                        🌙 Peygamberimizin Hayatı
+                    </button>
+                    <button data-lesson="kuran" onclick="setLesson('kuran')" class="lesson-btn p-3 rounded-xl border-2 text-left transition font-bold text-sm border-slate-200 hover:border-emerald-400 text-slate-700">
+                        📖 Kur'an-ı Kerim
+                    </button>
+                </div>
+            </div>
+
+            <!-- ADIM 2: SINIF SEÇİMİ -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 block mb-2.5">2. Adım: Sınıf Düzeyi Seçimi</span>
+                <div class="grid grid-cols-4 gap-2.5" id="gradeButtons">
+                    <button data-grade="5" onclick="setGrade('5')" class="grade-btn py-2.5 px-3 rounded-xl border-2 text-center transition font-extrabold text-sm border-emerald-700 bg-emerald-50 text-emerald-900">
+                        5. Sınıf
+                    </button>
+                    <button data-grade="6" onclick="setGrade('6')" class="grade-btn py-2.5 px-3 rounded-xl border-2 text-center transition font-extrabold text-sm border-slate-200 hover:border-emerald-400 text-slate-700">
+                        6. Sınıf
+                    </button>
+                    <button data-grade="7" onclick="setGrade('7')" class="grade-btn py-2.5 px-3 rounded-xl border-2 text-center transition font-extrabold text-sm border-slate-200 hover:border-emerald-400 text-slate-700">
+                        7. Sınıf
+                    </button>
+                    <button data-grade="8" onclick="setGrade('8')" class="grade-btn py-2.5 px-3 rounded-xl border-2 text-center transition font-extrabold text-sm border-slate-200 hover:border-emerald-400 text-slate-700">
+                        8. Sınıf
+                    </button>
+                </div>
+            </div>
+
+            <!-- ADIM 3: ÜNİTE SEÇİMİ -->
+            <div id="unitStepContainer" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 transition-all duration-300">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span id="unitStepTitle" class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 block">3. Adım: Ünite Seçimi</span>
+                    <span id="unitCountBadge" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full"></span>
+                </div>
+                <div id="unitButtons" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+            </div>
+
+            <!-- ADIM 4: ETKİNLİĞE GİRECEK OYUNLAR (31 Oyun) -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div>
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 block">4. Adım: Etkinliğe Girecek Oyunlar (31 Oyun)</span>
+                        <span class="text-xs text-slate-500">Seçtiğiniz ünite kavramlarına göre otomatik oluşturulur</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="selectAllGames()" class="px-3 py-1.5 rounded-full border-2 border-slate-800 text-xs font-bold hover:bg-slate-800 hover:text-white transition">Hepsini seç</button>
+                        <button onclick="clearAllGames()" class="px-3 py-1.5 rounded-full border-2 border-slate-300 text-xs font-bold text-slate-600 hover:border-slate-800 hover:text-slate-800 transition">Hiçbirini</button>
+                    </div>
+                </div>
+
+                <!-- 2 Sütunlu Oyun Kartları Grid -->
+                <div id="gamesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+                <!-- Seçim Özeti & İleri Butonu -->
+                <div class="mt-5 pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <p id="selectionSummary" class="text-sm font-bold text-slate-800">Henüz oyun seçilmedi. En az 1 oyun seçiniz.</p>
+                        <div id="selectedPills" class="flex flex-wrap gap-1.5 mt-2"></div>
+                    </div>
+                    <button onclick="switchTab('preview')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 shrink-0">
+                        <span>Etkinliği Önizle ve Yazdır</span>
+                        <span>➔</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. BÖLÜM: ÖNİZLEME, MİHENK TAHTA MODU VE YAZDIRMA EKRANI -->
+        <section id="sectionPreview" class="hidden">
+
+            <!-- Sabit Araç Çubuğu (Yazdırmada Gizlenir) -->
+            <div class="no-print bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-5 sticky top-16 z-20">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchTab('select')" class="px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100">
+                            ← Oyun Seçimine Dön
+                        </button>
+                        <button onclick="regenerateSeed()" class="px-3 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs sm:text-sm font-bold hover:bg-amber-200">
+                            🔄 Karıştır
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="btnAnswerKey" onclick="toggleAnswerKey()" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white transition">
+                            🔑 Cevap Anahtarı: Kapalı
+                        </button>
+                        <button onclick="window.print()" class="px-5 py-2 rounded-xl font-bold text-xs sm:text-sm bg-emerald-700 text-white hover:bg-emerald-800 transition shadow-sm">
+                            🖨️ A4 Yazdır / PDF
+                        </button>
+                        <button onclick="toggleSmartBoardPanel()" id="mihenkBtn" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-amber-500 text-amber-950 hover:bg-amber-400 transition shadow-sm flex items-center gap-1.5">
+                            🏆 Mihenk (Tahta &amp; Yarışma)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MİHENK: AKILLI TAHTA & GRUP YARIŞMASI PANELİ -->
+                <div id="mihenkPanel" class="hidden mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-900 text-white shadow-inner border border-emerald-700">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <!-- Sol: Grup Skorları -->
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                                🏆 Mihenk Yarışma Masası
+                            </span>
+                            <!-- A Grubu -->
+                            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                                <span class="text-xs font-bold text-emerald-200">A Grubu:</span>
+                                <button onclick="updateTeamScore('A', -10)" class="w-6 h-6 rounded-lg bg-rose-500/80 hover:bg-rose-500 font-bold text-xs">-</button>
+                                <span id="scoreTeamA" class="text-base font-extrabold text-amber-300 min-w-[28px] text-center">0</span>
+                                <button onclick="updateTeamScore('A', 10)" class="w-6 h-6 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 font-bold text-xs">+</button>
+                            </div>
+                            <!-- B Grubu -->
+                            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                                <span class="text-xs font-bold text-sky-200">B Grubu:</span>
+                                <button onclick="updateTeamScore('B', -10)" class="w-6 h-6 rounded-lg bg-rose-500/80 hover:bg-rose-500 font-bold text-xs">-</button>
+                                <span id="scoreTeamB" class="text-base font-extrabold text-amber-300 min-w-[28px] text-center">0</span>
+                                <button onclick="updateTeamScore('B', 10)" class="w-6 h-6 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 font-bold text-xs">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Sağ: Süre Sayacı & Tam Ekran -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/15">
+                                <span class="text-xs font-bold text-slate-300">⏱️ Süre:</span>
+                                <span id="mihenkTimerDisplay" class="font-mono text-base font-extrabold text-amber-400">03:00</span>
+                                <button onclick="toggleMihenkTimer()" id="timerToggleBtn" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold">Başlat</button>
+                                <button onclick="resetMihenkTimer()" class="px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-bold">Sıfırla</button>
+                            </div>
+                            <button onclick="toggleFullScreenBoard()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold border border-white/20">
+                                🖥️ Tam Ekran Tahta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sayfa Sekmeleri -->
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div id="pageNavPills" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="stepPage(-1)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">◀ Önceki</button>
+                        <button onclick="stepPage(1)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">Sonraki ▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- A4 Sayfalarının Render Edildiği Alan -->
+            <div id="printContainer"></div>
+        </section>
+
+    </main>
+
+    <script>
+        // 1. OYUN LİSTESİ (33 Oyun Eksiksiz)
+        const gamesList = [
+            { id: 'kelime_avi', name: 'Kelime Avı (15x15)', desc: 'Yatay, dikey ve ters gizli kavramları bul', icon: '🔍', selected: false },
+            { id: 'sifreli_mesaj', name: 'Şifreli Mesaj', desc: 'Sayı şifresini çöz, hadis veya ayeti oku', icon: '✉️', selected: false },
+            { id: 'sudoku', name: 'Kavram Sudokusu', desc: '6x6 dini kavramlarla mantık sudokusu', icon: '🔢', selected: false },
+            { id: 'labirent', name: 'Kavram Labirenti', desc: 'Doğru kavramları takip ederek çıkışa ulaş', icon: '🧭', selected: false },
+            { id: 'patika', name: 'Erdem Patikası', desc: 'A harfinden U harfine kesintisiz alfabe yolu çiz', icon: '🛤️', selected: false },
+            { id: 'anagram', name: 'Kavram Anagramı', desc: 'Karışık verilen harfleri düzenleyerek kavramı bul', icon: '🔤', selected: false },
+            { id: 'cengel_bulmaca', name: 'Kavram Çengel Bulmacası', desc: 'Tanımları verilen 5 ünite kavramını kesişmeli yerleştir', icon: '🧩', selected: false },
+            { id: 'eslestirme', name: 'Kavram – Anlam Eşleştirme', desc: 'Ünite kavramlarını doğru tanımlarıyla eşleştir', icon: '🎯', selected: false },
+            { id: 'eksik_harf', name: 'Eksik Harf Tamamlama', desc: 'Eksik bırakılan harfleri bularak kavramı tamamla', icon: '✏️', selected: false },
+            { id: 'soz_yapbozu', name: 'Ayet ve Hadis Yapbozu', desc: 'Karışık kelimelerden anlamlı ayet veya hadis sırala', icon: '📜', selected: false },
+            { id: 'zaman_tuneli', name: 'Siyer Zaman Tüneli', desc: 'Kronolojik olayları oluş sırasına göre basamakla', icon: '⏳', selected: false },
+            { id: 'kavram_domino', name: 'Kavram Domino Taşları', desc: 'Kavram ve tanım uçlarını ekleyerek zinciri tamamla', icon: '🁣', selected: false },
+            { id: 'kimdir_bu', name: 'Kimdir Bu Önder?', desc: '3 ipucundan hareketle peygamber veya sahabeyi bul', icon: '🕌', selected: false },
+            { id: 'kural_avcisi', name: 'Tecvid ve Kural Avcısı', desc: 'Doğru kural kutularını boyayarak gizli harfi çıkar', icon: '🔎', selected: false },
+            { id: 'akis_semasi', name: 'İbadet Akış Şeması', desc: 'Karışık verilen ibadet adımlarını doğru okla sırala', icon: '🔄', selected: false },
+            { id: 'harf_koprusu', name: 'Harf Köprüsü', desc: 'Her basamakta tek harf değiştirerek hedefe ulaş', icon: '🌉', selected: false },
+            { id: 'karar_kavsagi', name: 'Karar Kavşağı Labirenti', desc: 'Doğru (D) ve Yanlış (Y) oklarıyla çıkış kapısını bul', icon: '🚦', selected: false },
+            { id: 'kavram_terazisi', name: 'Kavram Terazisi', desc: 'Olumlu değerler ile zıddı olan davranışları eşleştir', icon: '⚖️', selected: false },
+            { id: 'sure_kimligi', name: 'Sure Kimlik Kartı', desc: 'Ayet sayısı, nüzul yeri ve konusundan sureyi bul', icon: '📖', selected: false },
+            { id: 'anlam_hirsizi', name: 'Anlam Hırsızı', desc: 'Metindeki 4 yanlış kavramı bulup doğrularıyla değiştir', icon: '🕵️', selected: false },
+            { id: 'farkli_olani_bul', name: 'Farklı Olanı Bul', desc: 'Dörtlü grupta anlamca dışarıda kalanı işaretle', icon: '❓', selected: false },
+            { id: 'erdem_carki', name: 'Erdem Çarkı', desc: 'Kök değere ait 4 günlük hayat davranışını yerleştir', icon: '🎡', selected: false },
+            { id: 'ayet_agaci', name: 'Ayet ve Konu Eşleştirme Ağacı', desc: 'İnanç, ibadet, ahlak ve kıssa dallarına ayet bağla', icon: '🌳', selected: false },
+            { id: 'esma_carki', name: 'Esma-i Hüsna Şifre Çarkı', desc: "Allah'ın güzel isimlerini Türkçe anlamlarıyla eşleştir", icon: '✨', selected: false },
+            { id: 'sahabe_gorev', name: 'Sahabe Görev Kartları', desc: 'Sahabeler ile öne çıkan görev/unvanlarını eşleştir', icon: '🛡️', selected: false },
+            { id: 'kavram_kovani', name: 'Kavram Kovanı', desc: 'Petek harflerinden merkez harfle dini kavram türet', icon: '🐝', selected: false },
+            { id: 'hukum_sepeti', name: 'Hüküm ve Değer Sepeti', desc: 'Karışık 12 kavramı iki ayrı kategori sepetine ayıkla', icon: '🧺', selected: false },
+            { id: 'kissa_dedektifi', name: 'Kıssa Kahramanları Dedektifi', desc: 'Kıssa sembol ve olaylarını ilgili peygamberle eşleştir', icon: '🔍', selected: false },
+            { id: 'mekan_krokisi', name: 'Kutsal Mekan Kroki Bulmacası', desc: 'Kâbe ve Mescid-i Nebi bölümlerini haritada bul', icon: '🕋', selected: false },
+            { id: 'hadis_zinciri', name: 'Hadis Tamamlama Zinciri', desc: 'İki parçalı hadis-i şeriflerin başı ile sonunu birleştir', icon: '🔗', selected: false },
+            { id: 'deger_senaryosu', name: 'Değerler Dedektifi Senaryosu', desc: 'Günlük hayat olayında uygulanan ahlaki değeri bul', icon: '🌟', selected: false }
+        ];
+
+        // 2. DERS, SINIF VE ÜNİTE MÜFREDAT VERİTABANI
+        const curriculumData = {
+            dkab: {
+                title: "Din Kültürü ve Ahlak Bilgisi",
+                grades: {
+                    "5": [
+                        { id: "u1", name: "1. Ünite: Allah İnancı", words: ["TEVHİD", "RAHMAN", "RAHİM", "İHLAS", "DUA", "ŞÜKÜR", "YARATICI", "EVREN", "ALLAH", "İMAN", "İNANÇ", "KÂİNAT", "YARATMAK", "DÜZEN", "UYUM", "ESMA-İ HÜSNA", "SEMİ", "BASAR", "İLİM", "KUDRET", "TEKVİN", "İHLAS SURESİ", "SAMED", "KÜFÜV", "TEFEKKÜR", "AYET", "SURE"], sudoku: ["RAHMAN", "RAHİM", "İHLAS", "TEVHİD"], cipher: "ALLAH HER ŞEYİ GÖREN VE BİLENDİR", abc: ["İHLAS", "ŞÜKÜR", "TEVHİD"], pattern: ["Rahman", "Rahim", "İhlas", "Rahman", "Rahim", "?"], patternAns: "İhlas" },
+                        { id: "u2", name: "2. Ünite: Namaz İbadeti", words: ["ABDEST", "EZAN", "KIYAM", "RÜKU", "SECDE", "CAMİ", "MİHRAP", "CEMAAT"], sudoku: ["ABDEST", "KIYAM", "RÜKU", "SECDE"], cipher: "NAMAZ DİNİN DİREĞİDİR", abc: ["ABDEST", "SECDE", "EZAN"], pattern: ["Kıyam", "Rüku", "Secde", "Kıyam", "Rüku", "?"], patternAns: "Secde" },
+                        { id: "u3", name: "3. Ünite: Kur'an-ı Kerim ve Özellikleri", words: ["AYET", "SURE", "CÜZ", "MUSHAF", "FATİHA", "İKRA", "VAHİY", "HAFIZ"], sudoku: ["AYET", "SURE", "CÜZ", "MUSHAF"], cipher: "KURAN İNSANLIĞA YOL GÖSTERİCİDİR", abc: ["AYET", "SURE", "VAHİY"], pattern: ["Ayet", "Sure", "Cüz", "Ayet", "Sure", "?"], patternAns: "Cüz" },
+                        { id: "u4", name: "4. Ünite: Peygamber Kıssaları", words: ["NUH", "İBRAHİM", "MUSA", "İSA", "YUSUF", "SABIR", "TEBLİĞ", "MUCİZE"], sudoku: ["SABIR", "TEBLİĞ", "MUCİZE", "KISSA"], cipher: "PEYGAMBERLER İNSANLARA EN GÜZEL ÖRNEKTİR", abc: ["SABIR", "TEBLİĞ", "MUCİZE"], pattern: ["Sabır", "Tevekkül", "Şükür", "Sabır", "Tevekkül", "?"], patternAns: "Şükür" }
+                    ],
+                    "6": [
+                        { id: "u1", name: "1. Ünite: Peygamber ve İlahi Kitap İnancı", words: ["NEBİ", "RESUL", "TEVRAT", "ZEBUR", "İNCİL", "KURAN", "SIDK", "EMANET"], sudoku: ["SIDK", "EMANET", "FETANET", "İSMET"], cipher: "PEYGAMBERLER GÜVENİLİR VE DOĞRU İNSANLARDIR", abc: ["NEBİ", "RESUL", "VAHİY"], pattern: ["Tevrat", "Zebur", "İncil", "Kur'an", "Tevrat", "?"], patternAns: "Zebur" },
+                        { id: "u2", name: "2. Ünite: Ramazan ve Oruç", words: ["ORUÇ", "SAHUR", "İFTAR", "TERAVİH", "FİTRE", "KADİR", "MUKABELE", "İMSAK"], sudoku: ["SAHUR", "İFTAR", "TERAVİH", "FİTRE"], cipher: "ORUÇ SABRIN VE ŞÜKRÜN İBADETİDİR", abc: ["SAHUR", "İFTAR", "FİTRE"], pattern: ["İmsak", "Sahur", "İftar", "İmsak", "Sahur", "?"], patternAns: "İftar" },
+                        { id: "u3", name: "3. Ünite: Ahlaki Davranışlar", words: ["ADALET", "DOSTLUK", "DÜRÜSTLÜK", "MERHAMET", "YARDIM", "SAYGI", "VEFA", "GÜVEN"], sudoku: ["ADALET", "MERHAMET", "VEFA", "SAYGI"], cipher: "GÜZEL AHLAK İMANIN KEMALİNDENDİR", abc: ["ADALET", "VEFA", "SAYGI"], pattern: ["Saygı", "Sevgi", "Merhamet", "Saygı", "Sevgi", "?"], patternAns: "Merhamet" }
+                    ],
+                    "7": [
+                        { id: "u1", name: "1. Ünite: Melek ve Ahiret İnancı", words: ["CEBRAİL", "MİKAİL", "İSRAFİL", "AZRAİL", "MİZAN", "BERZAH", "CENNET", "AHİRET"], sudoku: ["CEBRAİL", "MİKAİL", "İSRAFİL", "AZRAİL"], cipher: "DÜNYA AHİRETİN TARLASIDIR", abc: ["MİZAN", "AHİRET", "CENNET"], pattern: ["Cebrail", "Mikail", "İsrafil", "Azrail", "Cebrail", "?"], patternAns: "Mikail" },
+                        { id: "u2", name: "2. Ünite: Hac ve Kurban", words: ["KABE", "TAVAF", "İHRAM", "ARAFAT", "MİNA", "KURBAN", "ZEMZEM", "UMRE"], sudoku: ["KABE", "TAVAF", "İHRAM", "ARAFAT"], cipher: "HAC KARDEŞLİK VE BİRLİK İBADETİDİR", abc: ["TAVAF", "İHRAM", "KURBAN"], pattern: ["İhram", "Arafat", "Tavaf", "İhram", "Arafat", "?"], patternAns: "Tavaf" }
+                    ],
+                    "8": [
+                        { id: "u1", name: "1. Ünite: Kader İnancı", words: ["KADER", "KAZA", "İRADE", "TEVEKKÜL", "EMEK", "RIZIK", "ÖMÜR", "ECEL"], sudoku: ["KADER", "KAZA", "İRADE", "TEVEKKÜL"], cipher: "TEDBİR KULDA TAKDİR ALLAHTANDIR", abc: ["KADER", "İRADE", "RIZIK"], pattern: ["Emek", "Gayret", "Tevekkül", "Emek", "Gayret", "?"], patternAns: "Tevekkül" },
+                        { id: "u2", name: "2. Ünite: Zekât ve Sadaka", words: ["ZEKAT", "SADAKA", "İNFAK", "NİSAP", "ÖŞÜR", "FİTRE", "VAKIF", "CARİYE"], sudoku: ["ZEKAT", "SADAKA", "İNFAK", "NİSAP"], cipher: "VEREN EL ALAN ELDEN ÜSTÜNDÜR", abc: ["ZEKAT", "İNFAK", "NİSAP"], pattern: ["Zekat", "İnfak", "Sadaka", "Zekat", "İnfak", "?"], patternAns: "Sadaka" },
+                        { id: "u3", name: "3. Ünite: Din ve Hayat", words: ["CAN", "NESİL", "AKIL", "MAL", "DİN", "ADALET", "HUKUK", "MERHAMET"], sudoku: ["CAN", "AKIL", "NESİL", "MAL"], cipher: "İNSANLARA MERHAMET ETMEYENE MERHAMET EDİLMEZ", abc: ["AKIL", "NESİL", "ADALET"], pattern: ["Can", "Akıl", "Nesil", "Mal", "Din", "?"], patternAns: "Can" }
+                    ]
+                }
+            },
+            tdb: {
+                title: "Temel Dini Bilgiler",
+                grades: {
+                    "5": [
+                        { id: "u1", name: "1. Ünite: İslam'ın İnanç Esasları", words: ["İMAN", "İSLAM", "TEVHİD", "MELEK", "KİTAP", "KADER", "AHİRET", "KELİME"], sudoku: ["İMAN", "İSLAM", "TEVHİD", "AHİRET"], cipher: "İMANIN ŞARTI ALTIDIR", abc: ["İMAN", "İSLAM", "TEVHİD"], pattern: ["Allah", "Melek", "Kitap", "Peygamber", "Ahiret", "?"], patternAns: "Kader" },
+                        { id: "u2", name: "2. Ünite: Temizlik ve Abdest", words: ["TAHARET", "ABDEST", "GUSÜL", "TEYEMMÜM", "MİSVAK", "SU", "TOPRAK", "FARZ"], sudoku: ["ABDEST", "GUSÜL", "TEYEMMÜM", "TAHARET"], cipher: "TEMİZLİK İMANIN YARISIDIR", abc: ["ABDEST", "GUSÜL", "TAHARET"], pattern: ["Abdest", "Gusül", "Teyemmüm", "Abdest", "Gusül", "?"], patternAns: "Teyemmüm" }
+                    ],
+                    "6": [
+                        { id: "u1", name: "1. Ünite: İbadet ve Mükellefiyet", words: ["FARZ", "VACİP", "SÜNNET", "MÜSTEHAP", "MUBAH", "MEKRUH", "HARAM", "HELAL"], sudoku: ["FARZ", "VACİP", "SÜNNET", "MUBAH"], cipher: "İBADET KULLUĞUN EN GÜZEL İFADESİDİR", abc: ["FARZ", "VACİP", "SÜNNET"], pattern: ["Farz", "Vacip", "Sünnet", "Farz", "Vacip", "?"], patternAns: "Sünnet" }
+                    ],
+                    "7": [
+                        { id: "u1", name: "1. Ünite: Namazın Kılınışı ve Çeşitleri", words: ["İFTİTAH", "KIYAM", "KIRAAT", "RÜKU", "SECDE", "KADE", "CUMA", "BAYRAM"], sudoku: ["KIYAM", "KIRAAT", "RÜKU", "SECDE"], cipher: "NAMAZ MÜMİNİN MİRACIDIR", abc: ["KIYAM", "RÜKU", "SECDE"], pattern: ["Sabah", "Öğle", "İkindi", "Akşam", "Yatsı", "?"], patternAns: "Sabah" }
+                    ],
+                    "8": [
+                        { id: "u1", name: "1. Ünite: İslam Ahlakı ve Kul Hakkı", words: ["EMANET", "ADALET", "HIYANET", "GIYBET", "İFTİRA", "İSAR", "CÖMERT", "TEVAZU"], sudoku: ["ADALET", "EMANET", "İSAR", "TEVAZU"], cipher: "KUL HAKKI İLE ALLAHIN HUZURUNA ÇIKMAYINIZ", abc: ["ADALET", "TEVAZU", "İSAR"], pattern: ["Adalet", "Tevazu", "Cömertlik", "Adalet", "Tevazu", "?"], patternAns: "Cömertlik" }
+                    ]
+                }
+            },
+            siyer: {
+                title: "Peygamberimizin Hayatı",
+                grades: {
+                    "5": [
+                        { id: "u1", name: "1. Ünite: Peygamberimizin Doğumu ve Çocukluğu", words: ["MEKKE", "AMİNE", "ABDULLAH", "HALİME", "KABE", "EMİN", "DEDESİ", "AMCASI"], sudoku: ["MEKKE", "AMİNE", "HALİME", "EMİN"], cipher: "MUHAMMEDÜL EMİN GÜVENİLİR PEYGAMBER", abc: ["MEKKE", "HALİME", "EMİN"], pattern: ["Abdullah", "Amine", "Halime", "Abdullah", "Amine", "?"], patternAns: "Halime" }
+                    ],
+                    "6": [
+                        { id: "u1", name: "1. Ünite: İlk Vahiy ve İslam'a Davet", words: ["HİRA", "CEBRAİL", "İKRA", "HATİCE", "EBUBEKİR", "ALİ", "ZEYD", "ERDEM"], sudoku: ["HİRA", "İKRA", "HATİCE", "ERDEM"], cipher: "OKU YARATAN RABBİNİN ADIYLA OKU", abc: ["HİRA", "İKRA", "HATİCE"], pattern: ["Hatice", "Ebu Bekir", "Ali", "Zeyd", "Hatice", "?"], patternAns: "Ebu Bekir" }
+                    ],
+                    "7": [
+                        { id: "u1", name: "1. Ünite: Hicret ve Medine Dönemi", words: ["HİCRET", "MEDİNE", "ENSAR", "MUHACİR", "SEVR", "KUBA", "MESCİT", "SUFFE"], sudoku: ["HİCRET", "ENSAR", "MUHACİR", "SUFFE"], cipher: "ENSAR VE MUHACİR KARDEŞLİĞİ", abc: ["ENSAR", "MUHACİR", "SUFFE"], pattern: ["Mekke", "Sevr", "Kuba", "Medine", "Mekke", "?"], patternAns: "Sevr" }
+                    ],
+                    "8": [
+                        { id: "u1", name: "1. Ünite: Veda Hutbesi ve Örnek Ahlakı", words: ["VEDA", "HUTBE", "ADALET", "EŞİTLİK", "EMANET", "MERHAMET", "KARDEŞLİK", "BARIŞ"], sudoku: ["ADALET", "EŞİTLİK", "EMANET", "BARIŞ"], cipher: "BÜTÜN MÜSLÜMANLAR KARDEŞTİR", abc: ["ADALET", "EMANET", "BARIŞ"], pattern: ["Adalet", "Eşitlik", "Kardeşlik", "Adalet", "Eşitlik", "?"], patternAns: "Kardeşlik" }
+                    ]
+                }
+            },
+            kuran: {
+                title: "Kur'an-ı Kerim",
+                grades: {
+                    "5": [
+                        { id: "u1", name: "1. Ünite: Kur'an-ı Kerim'i Tanıyalım", words: ["AYET", "SURE", "CÜZ", "MUSHAF", "FATİHA", "BAKARA", "NAS", "İHLAS"], sudoku: ["AYET", "SURE", "CÜZ", "MUSHAF"], cipher: "KURAN OKUYUNUZ ÇÜNKÜ O ŞEFAATÇİDİR", abc: ["AYET", "SURE", "FATİHA"], pattern: ["Fatiha", "Bakara", "İhlas", "Nas", "Fatiha", "?"], patternAns: "Bakara" }
+                    ],
+                    "6": [
+                        { id: "u1", name: "1. Ünite: Kur'an'ın İndirilişi ve Yazılması", words: ["VAHİY", "RAMAZAN", "KADİR", "MUSHAF", "ZEYD", "HAFIZ", "MUKABELE", "TİLAVET"], sudoku: ["VAHİY", "MUSHAF", "HAFIZ", "TİLAVET"], cipher: "SİZİN EN HAYIRLINIZ KURANI ÖĞRENEN VE ÖĞRETENDİR", abc: ["VAHİY", "HAFIZ", "TİLAVET"], pattern: ["Vahiy", "Hafız", "Mushaf", "Vahiy", "Hafız", "?"], patternAns: "Mushaf" }
+                    ],
+                    "7": [
+                        { id: "u1", name: "1. Ünite: Tecvid Kuralları ve Güzel Okuma", words: ["TECVİD", "MED", "İHFA", "İZHAR", "İKLAP", "İDGAM", "KALKALE", "MAHREÇ"], sudoku: ["İHFA", "İZHAR", "İKLAP", "İDGAM"], cipher: "KURANI TERTİL İLE GÜZELCE OKU", abc: ["İHFA", "İZHAR", "İDGAM"], pattern: ["İzhar", "İdgam", "İklap", "İhfa", "İzhar", "?"], patternAns: "İdgam" }
+                    ],
+                    "8": [
+                        { id: "u1", name: "1. Ünite: Kur'an'da Ana Konular", words: ["İNANÇ", "İBADET", "AHLAK", "KISSA", "MUAMELAT", "TEVHİD", "ADALET", "HİKMET"], sudoku: ["İNANÇ", "İBADET", "AHLAK", "KISSA"], cipher: "KURAN AKIL SAHİPLERİ İÇİN BİR ÖĞÜTTÜR", abc: ["İNANÇ", "İBADET", "AHLAK"], pattern: ["İnanç", "İbadet", "Ahlak", "Kıssa", "İnanç", "?"], patternAns: "İbadet" }
+                    ]
+                }
+            }
+        };
+
+        // 3. UYGULAMA DURUMU (STATE)
+        let state = {
+            activeTab: 'home',
+            lesson: 'dkab',
+            grade: '5',
+            unitId: 'u1',
+            showAnswerKey: false,
+            seed: 1,
+            activePageFilter: 'all'
+        };
+
+        function showToast(msg) {
+            const box = document.getElementById('toastBox');
+            box.textContent = msg;
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2600);
+        }
+
+        function quickStartLesson(lessonKey) {
+            setLesson(lessonKey);
+            switchTab('select');
+        }
+
+        function switchTab(tab) {
+            state.activeTab = tab;
+            const secHome = document.getElementById('sectionHome');
+            const secSelect = document.getElementById('sectionSelect');
+            const secPreview = document.getElementById('sectionPreview');
+
+            const btnHome = document.getElementById('tabBtnHome');
+            const btnSelect = document.getElementById('tabBtnSelect');
+            const btnPreview = document.getElementById('tabBtnPreview');
+
+            const inactiveCls = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-emerald-100 hover:text-white";
+            const activeCls = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-amber-400 text-emerald-950 shadow";
+
+            secHome.classList.add('hidden');
+            secSelect.classList.add('hidden');
+            secPreview.classList.add('hidden');
+
+            btnHome.className = inactiveCls;
+            btnSelect.className = inactiveCls;
+            btnPreview.className = inactiveCls + " flex items-center gap-1.5";
+
+            if (tab === 'home') {
+                document.body.classList.remove('mihenk-board-mode');
+                secHome.classList.remove('hidden');
+                btnHome.className = activeCls;
+            } else if (tab === 'select') {
+                document.body.classList.remove('mihenk-board-mode');
+                secSelect.classList.remove('hidden');
+                btnSelect.className = activeCls;
+            } else {
+                const panel = document.getElementById('mihenkPanel');
+                if (panel && !panel.classList.contains('hidden')) {
+                    document.body.classList.add('mihenk-board-mode');
+                }
+                secPreview.classList.remove('hidden');
+                btnPreview.className = activeCls + " flex items-center gap-1.5";
+                renderPreviewPages();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setLesson(lessonKey) {
+            state.lesson = lessonKey;
+            document.querySelectorAll('.lesson-btn').forEach(btn => {
+                const isSel = btn.dataset.lesson === lessonKey;
+                btn.className = isSel
+                    ? "lesson-btn p-3 rounded-xl border-2 text-left transition font-bold text-sm border-emerald-700 bg-emerald-50 text-emerald-900"
+                    : "lesson-btn p-3 rounded-xl border-2 text-left transition font-bold text-sm border-slate-200 hover:border-emerald-400 text-slate-700";
+            });
+            renderUnits(true);
+        }
+
+        function setGrade(gradeKey) {
+            state.grade = gradeKey;
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                const isSel = btn.dataset.grade === gradeKey;
+                btn.className = isSel
+                    ? "grade-btn py-2.5 px-3 rounded-xl border-2 text-center transition font-extrabold text-sm border-emerald-700 bg-emerald-50 text-emerald-900"
+                    : "grade-btn py-2.5 px-3 rounded-xl border-2 text-center transition font-extrabold text-sm border-slate-200 hover:border-emerald-400 text-slate-700";
+            });
+            renderUnits(true);
+            const unitBox = document.getElementById('unitStepContainer');
+            if (unitBox) unitBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function renderUnits(autoResetUnit = false) {
+            const units = curriculumData[state.lesson].grades[state.grade] || [];
+            if ((autoResetUnit || !units.some(u => u.id === state.unitId)) && units.length > 0) {
+                state.unitId = units[0].id;
+            }
+            const lessonName = curriculumData[state.lesson].title;
+            const titleEl = document.getElementById('unitStepTitle');
+            const badgeEl = document.getElementById('unitCountBadge');
+            if (titleEl) titleEl.textContent = `3. Adım: ${lessonName} (${state.grade}. Sınıf) Üniteleri`;
+            if (badgeEl) badgeEl.textContent = `${units.length} Ünite Yüklendi`;
+
+            const container = document.getElementById('unitButtons');
+            container.innerHTML = units.map(u => {
+                const isSel = u.id === state.unitId;
+                return `
+                    <button onclick="setUnit('${u.id}')" class="p-3 rounded-xl border-2 text-left transition text-xs sm:text-sm font-bold ${isSel ? 'border-emerald-700 bg-emerald-50 text-emerald-900 shadow-sm' : 'border-slate-200 hover:border-emerald-400 text-slate-700'}">
+                        📚 ${u.name}
+                    </button>
+                `;
+            }).join('');
+
+            if (state.activeTab === 'preview') renderPreviewPages();
+        }
+
+        function setUnit(unitId) {
+            state.unitId = unitId;
+            renderUnits();
+            showToast("Ünite kavramları güncellendi.");
+        }
+
+        function getCurrentUnitData() {
+            const units = curriculumData[state.lesson].grades[state.grade] || [];
+            return units.find(u => u.id === state.unitId) || units[0];
+        }
+
+        function toggleGame(id) {
+            const item = gamesList.find(g => g.id === id);
+            if (item) {
+                item.selected = !item.selected;
+                renderGamesGrid();
+            }
+        }
+
+        function selectAllGames() {
+            gamesList.forEach(g => g.selected = true);
+            renderGamesGrid();
+            showToast("Tüm 33 oyun seçildi.");
+        }
+
+        function clearAllGames() {
+            gamesList.forEach(g => g.selected = false);
+            renderGamesGrid();
+            showToast("Seçimler temizlendi.");
+        }
+
+        function renderGamesGrid() {
+            const grid = document.getElementById('gamesGrid');
+            grid.innerHTML = gamesList.map(g => `
+                <div onclick="toggleGame('${g.id}')" class="cursor-pointer flex items-center gap-3 p-3.5 rounded-xl border-2 transition select-none min-h-[72px] ${g.selected ? 'border-emerald-700 bg-emerald-50/80 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}">
+                    <div class="w-10 h-10 rounded-lg border flex items-center justify-center text-xl shrink-0 ${g.selected ? 'bg-white border-emerald-300' : 'bg-slate-50 border-slate-200'}">
+                        ${g.icon}
+                    </div>
+                    <div class="min-w-0 flex-1 fit-box">
+                        <div class="font-bold text-sm text-slate-800 leading-snug">${g.name}</div>
+                        <div class="text-xs text-slate-500 leading-snug mt-0.5">${g.desc}</div>
+                    </div>
+                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold shrink-0 ${g.selected ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-300'}">
+                        ${g.selected ? '✓' : ''}
+                    </div>
+                </div>
+            `).join('');
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const selected = gamesList.filter(g => g.selected);
+            document.getElementById('badgeCount').textContent = selected.length;
+            const summary = document.getElementById('selectionSummary');
+            const pills = document.getElementById('selectedPills');
+
+            if (selected.length === 0) {
+                summary.textContent = "Henüz oyun seçilmedi. En az 1 oyun seçiniz.";
+                pills.innerHTML = "";
+                return;
+            }
+            summary.textContent = `Toplam ${selected.length} sayfalık A4 etkinlik hazırlanır:`;
+            pills.innerHTML = selected.map((g, i) => `
+                <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold">
+                    ${i + 1}. ${g.name}
+                </span>
+            `).join('');
+        }
+
+        function regenerateSeed() {
+            state.seed++;
+            renderPreviewPages();
+            showToast("Bulmaca yerleşimleri karıştırıldı!");
+        }
+
+        function toggleAnswerKey() {
+            state.showAnswerKey = !state.showAnswerKey;
+            const btn = document.getElementById('btnAnswerKey');
+            btn.textContent = state.showAnswerKey ? "🔑 Cevap Anahtarı: Açık" : "🔑 Cevap Anahtarı: Kapalı";
+            btn.className = state.showAnswerKey
+                ? "px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-2 border-amber-500 bg-amber-400 text-emerald-950 transition"
+                : "px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white transition";
+            renderPreviewPages();
+        }
+
+        function setPageFilter(filterVal) {
+            state.activePageFilter = filterVal;
+            renderPreviewPages();
+        }
+
+        function stepPage(dir) {
+            const selected = gamesList.filter(g => g.selected);
+            const total = selected.length + (state.showAnswerKey ? 1 : 0);
+            if (total === 0) return;
+
+            if (state.activePageFilter === 'all') {
+                state.activePageFilter = dir > 0 ? 0 : total - 1;
+            } else {
+                let next = state.activePageFilter + dir;
+                if (next < 0) next = total - 1;
+                if (next >= total) next = 0;
+                state.activePageFilter = next;
+            }
+            renderPreviewPages();
+        }
+
+        function renderPreviewPages() {
+            const selected = gamesList.filter(g => g.selected);
+            const container = document.getElementById('printContainer');
+            const navPills = document.getElementById('pageNavPills');
+
+            if (selected.length === 0) {
+                navPills.innerHTML = '';
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-10 text-center border border-slate-200">
+                        <p class="text-slate-600 font-bold mb-3">Etkinlik oluşturmak için henüz oyun seçmediniz.</p>
+                        <button onclick="switchTab('select')" class="px-5 py-2.5 rounded-xl bg-emerald-700 text-white font-bold text-sm">1. Bölüme Git ve Oyun Seç</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const totalPages = selected.length + (state.showAnswerKey ? 1 : 0);
+            let pillsHTML = `
+                <button onclick="setPageFilter('all')" class="px-3 py-1 rounded-full text-xs font-bold shrink-0 ${state.activePageFilter === 'all' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                    Tüm Sayfalar (${totalPages})
+                </button>
+            `;
+            selected.forEach((g, idx) => {
+                const isAct = state.activePageFilter === idx;
+                pillsHTML += `
+                    <button onclick="setPageFilter(${idx})" class="px-3 py-1 rounded-full text-xs font-bold shrink-0 ${isAct ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                        ${idx + 1}. ${g.name}
+                    </button>
+                `;
+            });
+            if (state.showAnswerKey) {
+                const akIdx = selected.length;
+                const isAct = state.activePageFilter === akIdx;
+                pillsHTML += `
+                    <button onclick="setPageFilter(${akIdx})" class="px-3 py-1 rounded-full text-xs font-bold shrink-0 ${isAct ? 'bg-amber-500 text-emerald-950' : 'bg-amber-100 text-amber-900'}">
+                        🔑 Cevap Anahtarı
+                    </button>
+                `;
+            }
+            navPills.innerHTML = pillsHTML;
+
+            const unitData = getCurrentUnitData();
+            const lessonTitle = curriculumData[state.lesson].title;
+            let pagesHTML = '';
+
+            selected.forEach((game, idx) => {
+                const hideOnScreen = (state.activePageFilter !== 'all' && state.activePageFilter !== idx) ? 'hidden' : '';
+                pagesHTML += buildA4Sheet(game, idx + 1, selected.length, lessonTitle, unitData, hideOnScreen);
+            });
+
+            if (state.showAnswerKey) {
+                const akIdx = selected.length;
+                const hideOnScreen = (state.activePageFilter !== 'all' && state.activePageFilter !== akIdx) ? 'hidden' : '';
+                pagesHTML += buildAnswerKeySheet(selected, lessonTitle, unitData, hideOnScreen);
+            }
+
+            container.innerHTML = pagesHTML;
+        }
+
+        function buildA4Sheet(game, pageNo, totalNo, lessonTitle, unitData, extraCls) {
+            return `
+                <article class="a4-sheet ${extraCls}">
+                    <div>
+                        <!-- Sayfa Üst Bilgisi -->
+                        <div class="border-b-2 border-emerald-800 pb-2 mb-2.5 flex flex-wrap justify-between items-start gap-2">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xl">${game.icon}</span>
+                                    <h2 class="text-lg font-extrabold text-emerald-950">${game.name}</h2>
+                                </div>
+                                <p class="text-xs font-bold text-emerald-700 mt-0.5">${lessonTitle} • ${state.grade}. Sınıf • ${unitData.name}</p>
+                            </div>
+                            <div class="board-paper-only text-xs text-slate-700 space-y-1 text-right">
+                                <div><strong>Adı Soyadı:</strong> ...........................................</div>
+                                <div><strong>Sınıf / No:</strong> .................... / ............</div>
+                            </div>
+                        </div>
+
+                        <!-- Oyun İçeriği -->
+                        <div class="mt-1">
+                            ${generateGameContent(game.id, unitData)}
+                        </div>
+                    </div>
+
+                    <!-- Sayfa Alt Bilgisi -->
+                    <div class="border-t border-slate-200 pt-2 mt-3 flex justify-between items-center text-[11px] font-semibold text-slate-500">
+                        <span>💚 Maarifin Kalbinde Oyun: Değerler ve Zekâ Atölyesi • Değerlerle Düşün, Oyunla Öğren</span>
+                        <span>Sayfa ${pageNo} / ${totalNo}</span>
+                    </div>
+                </article>
+            `;
+        }
+
+        // Deterministik Rastgele Sayı Üretici (Cevap Anahtarı açıldığında bulmacanın değişmemesi için)
+        function createSeededRng(seed) {
+            let s = (seed * 9301 + 49297) % 233280;
+            return function () {
+                s = (s * 9301 + 49297) % 233280;
+                return s / 233280;
+            };
+        }
+
+        function generateGameContent(id, unit) {
+            const showAns = state.showAnswerKey;
+            const rng = createSeededRng(state.seed + id.length * 17 + state.grade.charCodeAt(0));
+
+            // 1. KELİME AVI (15x15 - Yatay, Ters Yatay, Yukarıdan Aşağıya, Aşağıdan Yukarıya)
+            if (id === 'kelime_avi') {
+                const size = 15;
+                const grid = Array.from({ length: size }, () => Array(size).fill(''));
+                const highlight = Array.from({ length: size }, () => Array(size).fill(false));
+                const letters = "ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ";
+                const directions = [
+                    { dr: 0, dc: 1 },  // Soldan sağa (Yatay)
+                    { dr: 0, dc: -1 }, // Sağdan sola (Ters yatay)
+                    { dr: 1, dc: 0 },  // Yukarıdan aşağıya (Dikey)
+                    { dr: -1, dc: 0 }  // Aşağıdan yukarıya (Ters dikey)
+                ];
+
+                unit.words.forEach((rawWord, wIdx) => {
+                    const w = rawWord.replace(/[\s\-']/g, '').toLocaleUpperCase('tr-TR');
+                    let placed = false;
+                    for (let attempt = 0; attempt < 250 && !placed; attempt++) {
+                        const dir = directions[(wIdx + attempt + state.seed) % 4];
+                        const r = Math.floor(rng() * size);
+                        const c = Math.floor(rng() * size);
+                        const endR = r + dir.dr * (w.length - 1);
+                        const endC = c + dir.dc * (w.length - 1);
+
+                        if (endR >= 0 && endR < size && endC >= 0 && endC < size) {
+                            let canPlace = true;
+                            for (let i = 0; i < w.length; i++) {
+                                const nr = r + dir.dr * i;
+                                const nc = c + dir.dc * i;
+                                if (grid[nr][nc] !== '' && grid[nr][nc] !== w[i]) {
+                                    canPlace = false;
+                                    break;
+                                }
+                            }
+                            if (canPlace) {
+                                for (let i = 0; i < w.length; i++) {
+                                    const nr = r + dir.dr * i;
+                                    const nc = c + dir.dc * i;
+                                    grid[nr][nc] = w[i];
+                                    highlight[nr][nc] = true;
+                                }
+                                placed = true;
+                            }
+                        }
+                    }
+                });
+
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (grid[r][c] === '') {
+                            grid[r][c] = letters[Math.floor(rng() * letters.length)];
+                        }
+                    }
+                }
+
+                let cellsHTML = '';
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const ansCls = (showAns && highlight[r][c]) ? 'ws-cell-active' : '';
+                        cellsHTML += `<div onclick="this.classList.toggle('ws-cell-active')" class="cursor-pointer aspect-square border border-slate-300 flex items-center justify-center font-extrabold text-xs sm:text-sm md:text-[15px] leading-none select-none transition ${ansCls}">${grid[r][c]}</div>`;
+                    }
+                }
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> 15x15 harf tablosu içine <strong>soldan sağa, sağdan sola, yukarıdan aşağıya ve aşağıdan yukarıya</strong> gizlenmiş olan <strong>${unit.words.length} kavramı</strong> bularak işaretleyiniz.</p>
+                    <div class="w-full max-w-[600px] print:max-w-[150mm] mx-auto auto-grid-15 border-2 border-slate-900 rounded-xl overflow-hidden bg-white shadow-sm">
+                        ${cellsHTML}
+                    </div>
+                    <div class="mt-2.5 p-2 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-wrap justify-center gap-1">
+                        ${unit.words.map(w => `<span class="px-2 py-0.5 rounded-md bg-white border border-emerald-400 text-[10px] sm:text-[11px] font-extrabold text-emerald-950">${w}</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // 2. ŞİFRELİ MESAJ
+            if (id === 'sifreli_mesaj') {
+                const uniqueChars = [...new Set(unit.cipher.replace(/\s+/g, '').split(''))];
+                const charMap = {};
+                uniqueChars.forEach((ch, idx) => {
+                    charMap[ch] = ((idx + state.seed) % 29) + 11;
+                });
+
+                const keyHTML = Object.entries(charMap).map(([ch, num]) => `
+                    <div class="bg-white border border-slate-300 rounded-lg py-1.5 px-1 text-center text-xs font-extrabold">
+                        <span class="text-emerald-800">${num}</span> = <span class="text-slate-900">${ch}</span>
+                    </div>
+                `).join('');
+
+                const wordsHTML = unit.cipher.split(' ').map(word => {
+                    const slots = word.split('').map(ch => `
+                        <div class="flex flex-col items-center">
+                            <input type="text" maxlength="1" value="${showAns ? ch : ''}" class="w-7 h-8 border-b-2 border-slate-900 text-center font-extrabold text-sm text-emerald-800 uppercase bg-transparent focus:outline-none">
+                            <span class="text-[11px] font-bold text-slate-500 mt-1">${charMap[ch]}</span>
+                        </div>
+                    `).join('');
+                    return `<div class="flex gap-1.5 mb-2">${slots}</div>`;
+                }).join('');
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-3"><strong>Yönerge:</strong> Yukarıdaki şifre anahtarını kullanarak sayıların karşılığı olan harfleri çizgilerin üzerine yazınız ve gizli mesajı çözünüz.</p>
+                    <div class="grid grid-cols-5 sm:grid-cols-7 gap-1.5 p-3 bg-slate-100 rounded-xl border border-slate-200 mb-6">
+                        ${keyHTML}
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-x-6 gap-y-3 p-4 border-2 border-dashed border-emerald-300 rounded-2xl bg-emerald-50/30">
+                        ${wordsHTML}
+                    </div>
+                `;
+            }
+
+            // 3. KAVRAM SUDOKUSU (6x6 - 2x3 Bölgeli)
+            if (id === 'sudoku') {
+                const pool = [...new Set([...unit.sudoku, ...unit.words])].slice(0, 6);
+                const shift = state.seed % 6;
+                const items = pool.map((_, i) => pool[(i + shift) % 6]);
+                const base6 = [
+                    [0, 1, 2, 3, 4, 5],
+                    [3, 4, 5, 0, 1, 2],
+                    [1, 2, 0, 4, 5, 3],
+                    [4, 5, 3, 1, 2, 0],
+                    [2, 0, 1, 5, 3, 4],
+                    [5, 3, 4, 2, 0, 1]
+                ];
+                const masks6 = [
+                    [true,  false, true,  false, false, true ],
+                    [false, true,  false, true,  false, false],
+                    [false, false, true,  false, true,  false],
+                    [true,  false, false, false, false, true ],
+                    [false, true,  false, true,  false, false],
+                    [true,  false, false, false, true,  true ]
+                ];
+
+                let cells = '';
+                for (let r = 0; r < 6; r++) {
+                    for (let c = 0; c < 6; c++) {
+                        const val = items[base6[r][c]];
+                        const isGiven = masks6[r][c];
+                        const visible = isGiven || showAns;
+                        const borderR = (c === 2) ? 'sudoku-box-border-r' : '';
+                        const borderB = (r === 1 || r === 3) ? 'sudoku-box-border-b' : '';
+                        const textSizeCls = val.length > 9
+                            ? 'text-[8px] sm:text-[10px]'
+                            : val.length > 6
+                                ? 'text-[9px] sm:text-[11px]'
+                                : 'text-[10px] sm:text-xs';
+                        cells += `
+                            <div class="min-h-[50px] sm:min-h-[60px] print:min-h-[24mm] h-auto border border-slate-400 flex items-center justify-center px-1 py-1 text-center overflow-hidden fit-box ${isGiven ? 'bg-slate-50' : 'bg-white'} ${borderR} ${borderB}">
+                                ${visible
+                                    ? `<span class="font-extrabold leading-tight break-words ${textSizeCls} ${isGiven ? 'text-slate-900' : 'text-emerald-700'}">${val}</span>`
+                                    : `<input type="text" placeholder="?" class="w-full min-h-[36px] text-center text-[10px] sm:text-xs font-bold text-emerald-800 bg-transparent focus:outline-none">`
+                                }
+                            </div>
+                        `;
+                    }
+                }
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Her satırda, her sütunda ve kalın çizgili her 2x3 bölgede <strong>${items.join(', ')}</strong> kavramları birer kez yer almalıdır.</p>
+                    <div class="w-full max-w-[640px] print:max-w-[172mm] mx-auto auto-grid-6 border-2 border-slate-900 rounded-xl overflow-hidden shadow-sm">
+                        ${cells}
+                    </div>
+                    <div class="mt-2.5 p-2 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-wrap justify-center gap-1.5">
+                        ${items.map(w => `<span class="px-2.5 py-0.5 rounded-md bg-white border border-emerald-400 text-[10px] sm:text-xs font-extrabold text-emerald-950">${w}</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // 7. KAVRAM LABİRENTİ (10x10 Gerçek Bağlantılı Yol)
+            if (id === 'labirent') {
+                const paths = [
+                    [0, 1, 2, 12, 22, 23, 24, 34, 44, 45, 46, 56, 66, 65, 64, 74, 84, 85, 86, 87, 97, 98, 99],
+                    [0, 10, 20, 21, 22, 32, 42, 43, 53, 63, 64, 65, 55, 56, 57, 67, 77, 78, 88, 98, 99],
+                    [0, 1, 11, 12, 13, 14, 24, 34, 35, 36, 46, 56, 57, 58, 68, 78, 79, 89, 99]
+                ];
+                const validPath = paths[state.seed % paths.length];
+                const distractors = ["ŞİRİN", "OYUNCAK", "TELEVİZYON", "ÇİKOLATA", "BİSİKLET", "KARTOPU", "UÇURTMA", "KUMBARA", "BALON", "ŞEMSİYE"];
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> <strong>GİRİŞ</strong> karesinden başlayarak yalnızca <strong>${unit.name}</strong> kavramlarının üzerinden yatay veya dikey ilerleyip <strong>ÇIKIŞ</strong> karesine ulaşınız (tıklayarak yolu işaretleyebilirsiniz).</p>
+                    <div class="w-full max-w-[660px] print:max-w-[164mm] mx-auto auto-grid-10 border-2 border-slate-900 rounded-xl overflow-hidden bg-white shadow-sm">
+                        ${Array.from({ length: 100 }).map((_, idx) => {
+                            const isStart = idx === 0;
+                            const isEnd = idx === 99;
+                            const isPath = validPath.includes(idx);
+                            let label = '';
+                            let cls = 'bg-white text-slate-500';
+                            if (isStart) { label = 'GİRİŞ'; cls = 'bg-emerald-600 text-white'; }
+                            else if (isEnd) { label = 'ÇIKIŞ'; cls = 'bg-amber-500 text-emerald-950'; }
+                            else if (isPath) {
+                                label = unit.words[(idx + state.seed) % unit.words.length];
+                                cls = showAns ? 'ws-cell-active font-extrabold' : 'bg-white text-slate-800';
+                            } else {
+                                label = (idx % 3 === 0) ? '✖' : distractors[(idx + state.seed) % distractors.length];
+                                cls = (idx % 3 === 0) ? 'bg-slate-200 text-slate-500' : 'bg-slate-50 text-slate-600';
+                            }
+                            const fSize = label.length > 9 ? 'text-[6px] sm:text-[8px]' : label.length > 6 ? 'text-[7px] sm:text-[9px]' : 'text-[8px] sm:text-[10px]';
+                            return `<div onclick="this.classList.toggle('ws-cell-active')" class="cursor-pointer aspect-square border border-slate-300 flex items-center justify-center ${fSize} font-extrabold px-0.5 py-0.5 text-center leading-tight break-words overflow-hidden select-none fit-box ${cls}">${label}</div>`;
+                        }).join('')}
+                    </div>
+                    <div class="mt-2.5 p-2 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-wrap justify-center gap-1">
+                        <span class="text-[10px] sm:text-xs font-bold text-emerald-900 mr-1">Geçerli Ünite Kavramları:</span>
+                        ${unit.words.map(w => `<span class="px-2 py-0.5 rounded bg-white border border-emerald-300 text-[9px] sm:text-[10px] font-bold text-emerald-900">${w}</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // 5. ERDEM PATİKASI (2 Adet 5x5 Alfabe Patikası: A→U ve U→A)
+            if (id === 'patika') {
+                const pathLetters = [
+                    'A', 'B', 'C', 'Ç', 'D',
+                    'H', 'Ğ', 'G', 'F', 'E',
+                    'I', 'İ', 'J', 'K', 'L',
+                    'P', 'Ö', 'O', 'N', 'M',
+                    'R', 'S', 'Ş', 'T', 'U'
+                ];
+                const revLetters = [...pathLetters].reverse();
+                const givens = new Set(['A', 'D', 'Ğ', 'İ', 'L', 'O', 'R', 'U']);
+                const renderPathGrid = (arr, title) => `
+                    <div class="p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <span class="text-xs font-extrabold text-emerald-900 block text-center mb-2">${title}</span>
+                        <div class="w-full max-w-[270px] mx-auto auto-grid-5 border-2 border-slate-900 rounded-xl overflow-hidden shadow-sm">
+                            ${arr.map(ch => {
+                                const isGiven = givens.has(ch);
+                                return `<div class="h-12 border border-slate-300 flex items-center justify-center font-extrabold text-sm ${isGiven ? 'bg-emerald-100 text-emerald-950' : 'bg-white text-emerald-700'}">${isGiven || showAns ? ch : '<input type="text" maxlength="1" placeholder="?" class="w-full text-center font-bold uppercase bg-transparent focus:outline-none">'}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-3"><strong>Yönerge:</strong> Verilen başlangıç harfinden bitiş harfine kadar tüm harfleri yatay veya dikey komşu karelerden geçecek şekilde alfabe sırasıyla tamamlayınız.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4 my-3">
+                        ${renderPathGrid(pathLetters, '1. Patika (A Harfinden U Harfine)')}
+                        ${renderPathGrid(revLetters, '2. Patika (U Harfinden A Harfine)')}
+                    </div>
+                `;
+            }
+
+            // 6. KAVRAM ANAGRAMI (Karışık Harflerden Kavram Bulma - 10 Kavram)
+            if (id === 'anagram') {
+                const pool = unit.words.filter(w => w.replace(/[\s\-']/g, '').length >= 3 && w.replace(/[\s\-']/g, '').length <= 10);
+                const picked = [];
+                const copy = [...pool];
+                while (copy.length && picked.length < 10) {
+                    const idx = Math.floor(rng() * copy.length);
+                    picked.push(copy.splice(idx, 1)[0]);
+                }
+
+                const scramble = (word) => {
+                    const chars = word.replace(/[\s\-']/g, '').split('');
+                    if (chars.length < 2) return chars.join('');
+                    for (let t = 0; t < 12; t++) {
+                        for (let i = chars.length - 1; i > 0; i--) {
+                            const j = Math.floor(rng() * (i + 1));
+                            [chars[i], chars[j]] = [chars[j], chars[i]];
+                        }
+                        if (chars.join('') !== word.replace(/[\s\-']/g, '')) break;
+                    }
+                    return chars.join(' ');
+                };
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-3"><strong>Yönerge:</strong> Aşağıda harfleri karıştırılarak verilen ünite kavramlarını çözerek karşılarındaki kutulara doğru şekilde yazınız.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 my-3">
+                        ${picked.map((w, i) => `
+                            <div class="p-3 rounded-xl border border-slate-300 bg-slate-50 flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-[11px] font-extrabold text-emerald-800">${i + 1}. Karışık Harfler</span>
+                                    <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-bold">${w.replace(/[\s\-']/g, '').length} Harf</span>
+                                </div>
+                                <div class="font-mono text-sm sm:text-base font-extrabold tracking-widest text-slate-900 bg-white border border-slate-200 rounded-lg py-1.5 px-2 text-center fit-box">${scramble(w)}</div>
+                                <input type="text" value="${showAns ? w : ''}" placeholder="Doğru kavramı yazınız..." class="w-full px-2.5 py-1.5 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-400 bg-white text-slate-900'} text-center font-extrabold text-xs sm:text-sm uppercase focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 7. KAVRAM ÇENGEL BULMACASI (Kesişen Kelimeler)
+            if (id === 'cengel_bulmaca') {
+                const size = 13;
+                const grid = Array.from({ length: size }, () => Array(size).fill(''));
+                const nums = Array.from({ length: size }, () => Array(size).fill(0));
+                const cleanWords = unit.words
+                    .map(w => ({ orig: w, clean: w.replace(/[\s\-']/g, '').toLocaleUpperCase('tr-TR') }))
+                    .filter(w => w.clean.length >= 3 && w.clean.length <= 11)
+                    .sort((a, b) => b.clean.length - a.clean.length);
+
+                const placedWords = [];
+                if (cleanWords.length > 0) {
+                    const first = cleanWords[0];
+                    const r0 = Math.floor(size / 2);
+                    const c0 = Math.floor((size - first.clean.length) / 2);
+                    for (let i = 0; i < first.clean.length; i++) grid[r0][c0 + i] = first.clean[i];
+                    placedWords.push({ ...first, r: r0, c: c0, dir: 'Yatay', no: 1 });
+                    nums[r0][c0] = 1;
+
+                    let nextNo = 2;
+                    for (let wi = 1; wi < cleanWords.length && placedWords.length < 7; wi++) {
+                        const cand = cleanWords[wi];
+                        let done = false;
+                        for (let r = 0; r < size && !done; r++) {
+                            for (let c = 0; c < size && !done; c++) {
+                                if (!grid[r][c]) continue;
+                                for (let k = 0; k < cand.clean.length && !done; k++) {
+                                    if (cand.clean[k] !== grid[r][c]) continue;
+                                    // Dikey yerleştirme dene
+                                    const sr = r - k;
+                                    if (sr >= 0 && sr + cand.clean.length <= size) {
+                                        let ok = true;
+                                        if (sr > 0 && grid[sr - 1][c]) ok = false;
+                                        if (sr + cand.clean.length < size && grid[sr + cand.clean.length][c]) ok = false;
+                                        for (let t = 0; t < cand.clean.length && ok; t++) {
+                                            const ch = grid[sr + t][c];
+                                            if (ch !== '' && ch !== cand.clean[t]) ok = false;
+                                            if (ch === '') {
+                                                if (c > 0 && grid[sr + t][c - 1]) ok = false;
+                                                if (c + 1 < size && grid[sr + t][c + 1]) ok = false;
+                                            }
+                                        }
+                                        if (ok) {
+                                            for (let t = 0; t < cand.clean.length; t++) grid[sr + t][c] = cand.clean[t];
+                                            if (!nums[sr][c]) nums[sr][c] = nextNo;
+                                            placedWords.push({ ...cand, r: sr, c, dir: 'Dikey', no: nums[sr][c] });
+                                            if (nums[sr][c] === nextNo) nextNo++;
+                                            done = true;
+                                        }
+                                    }
+                                    // Yatay yerleştirme dene
+                                    const sc = c - k;
+                                    if (!done && sc >= 0 && sc + cand.clean.length <= size) {
+                                        let ok = true;
+                                        if (sc > 0 && grid[r][sc - 1]) ok = false;
+                                        if (sc + cand.clean.length < size && grid[r][sc + cand.clean.length]) ok = false;
+                                        for (let t = 0; t < cand.clean.length && ok; t++) {
+                                            const ch = grid[r][sc + t];
+                                            if (ch !== '' && ch !== cand.clean[t]) ok = false;
+                                            if (ch === '') {
+                                                if (r > 0 && grid[r - 1][sc + t]) ok = false;
+                                                if (r + 1 < size && grid[r + 1][sc + t]) ok = false;
+                                            }
+                                        }
+                                        if (ok) {
+                                            for (let t = 0; t < cand.clean.length; t++) grid[r][sc + t] = cand.clean[t];
+                                            if (!nums[r][sc]) nums[r][sc] = nextNo;
+                                            placedWords.push({ ...cand, r, c: sc, dir: 'Yatay', no: nums[r][sc] });
+                                            if (nums[r][sc] === nextNo) nextNo++;
+                                            done = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let cellsHTML = '';
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const ch = grid[r][c];
+                        const n = nums[r][c];
+                        if (!ch) {
+                            cellsHTML += `<div class="aspect-square bg-slate-800 border border-slate-700"></div>`;
+                        } else {
+                            cellsHTML += `
+                                <div class="relative aspect-square bg-white border border-slate-500 flex items-center justify-center">
+                                    ${n ? `<span class="absolute top-0 left-0.5 text-[7px] sm:text-[8px] font-extrabold text-emerald-800 leading-none">${n}</span>` : ''}
+                                    ${showAns
+                                        ? `<span class="font-extrabold text-[10px] sm:text-xs text-emerald-700">${ch}</span>`
+                                        : `<input type="text" maxlength="1" class="w-full h-full text-center font-extrabold text-[10px] sm:text-xs uppercase text-slate-900 bg-transparent focus:outline-none">`
+                                    }
+                                </div>
+                            `;
+                        }
+                    }
+                }
+
+                const cengelDefs = {
+                    TEVHİD: "Allah'ın bir ve tek olduğuna inanmak",
+                    RAHMAN: "Dünyada bütün varlıklara merhamet eden",
+                    RAHİM: "Ahirette yalnızca müminlere merhamet eden",
+                    İHLAS: "İbadetlerde yalnızca Allah rızasını gözetmek",
+                    DUA: "Allah ile iletişim kurup O'ndan yardım istemek",
+                    ŞÜKÜR: "Nimetlere karşı Allah'a minnettarlık göstermek",
+                    YARATICI: "Her şeyi yoktan var eden Yüce Allah",
+                    EVREN: "Allah'ın yarattığı tüm varlıkların bulunduğu düzen",
+                    ALLAH: "Her şeyin yaratıcısı ve tek sahibi",
+                    İMAN: "Allah'ın varlığına ve bildirdiklerine inanmak",
+                    ABDEST: "Namaz öncesi belirli organları yıkamak",
+                    EZAN: "Namaz vaktinin girdiğini bildiren çağrı",
+                    KIYAM: "Namazda ayakta durmak",
+                    RÜKU: "Namazda elleri dizlere koyarak eğilmek",
+                    SECDE: "Namazda alın ve burnu yere koymak",
+                    AYET: "Kur'an surelerini oluşturan her bir cümle",
+                    SURE: "Ayetlerden oluşan Kur'an bölümleri",
+                    CÜZ: "Kur'an'ın yirmi sayfalık otuz bölümünden biri",
+                    MUSHAF: "Kur'an'ın iki kapak arasında kitaplaşmış hali",
+                    VAHİY: "Allah'ın emirlerini peygamberlere bildirmesi",
+                    HAFIZ: "Kur'an-ı Kerim'in tamamını ezberleyen kimse",
+                    ORUÇ: "İmsaktan iftara kadar yeme içmeden uzak durmak",
+                    SAHUR: "Oruç için imsaktan önce yenilen yemek",
+                    İFTAR: "Akşam ezanıyla orucun açıldığı vakit",
+                    ADALET: "Herkese hak ettiğini vermek, doğruluktan ayrılmamak",
+                    MERHAMET: "Canlılara karşı şefkat ve acıma duygusu",
+                    KADER: "Allah'ın her şeyi ölçü ve düzene göre takdir etmesi",
+                    TEVEKKÜL: "Çaba gösterip sonucu Allah'a bırakmak",
+                    ZEKAT: "Zenginlerin mallarının belli kısmını ihtiyaç sahiplerine vermesi",
+                    SADAKA: "Allah rızası için yapılan her türlü iyilik",
+                    HİCRET: "Mekke'den Medine'ye yapılan kutlu göç",
+                    ENSAR: "Medine'de Muhacirlere yardım eden yerli Müslümanlar",
+                    MUHACİR: "Mekke'den Medine'ye göç eden Müslümanlar",
+                    TECVİD: "Kur'an'ı harflerin hakkını vererek okumak",
+                    TAHARET: "Maddi ve manevi temizlik",
+                    GUSÜL: "Bütün vücudu kuru yer kalmadan yıkamak",
+                    TEYEMMÜM: "Su yokken temiz toprakla yapılan temizlik"
+                };
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Tanımları verilen ünite kavramlarını kesişen harflere dikkat ederek çengel bulmacaya yerleştiriniz.</p>
+                    <div class="w-full max-w-[460px] print:max-w-[125mm] mx-auto grid grid-cols-[repeat(13,minmax(0,1fr))] border-2 border-slate-900 rounded-xl overflow-hidden shadow-sm">
+                        ${cellsHTML}
+                    </div>
+                    <div class="mt-2.5 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                        ${placedWords.slice(0, 5).map(p => `
+                            <div class="text-[10px] sm:text-xs text-slate-800 fit-box">
+                                <strong class="text-emerald-900">${p.no}. (${p.dir} • ${p.clean.length} Harf):</strong> ${cengelDefs[p.orig] || `${unit.name} konusu temel kavramı`}
+                                ${showAns ? `<span class="ml-1 font-extrabold text-emerald-700">[${p.orig}]</span>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 8. KAVRAM – ANLAM EŞLEŞTİRME
+            if (id === 'eslestirme') {
+                const defs = {
+                    TEVHİD: "Allah'ın bir ve tek olduğuna inanmak",
+                    RAHMAN: "Dünyada bütün varlıklara merhamet eden",
+                    RAHİM: "Ahirette yalnızca müminlere merhamet eden",
+                    İHLAS: "İbadet ve davranışlarda yalnızca Allah rızasını gözetmek",
+                    DUA: "İnsanın Allah ile iletişim kurup O'ndan yardım istemesi",
+                    ŞÜKÜR: "Verilen nimetlere karşı Allah'a minnettarlığını göstermek",
+                    YARATICI: "Her şeyi yoktan var eden Yüce Allah",
+                    EVREN: "Allah'ın yarattığı tüm varlıkların bulunduğu düzen",
+                    ALLAH: "Her şeyin yaratıcısı ve tek sahibi olan Yüce Yaratıcı",
+                    İMAN: "Allah'ın varlığına ve bildirdiklerine gönülden inanmak",
+                    ABDEST: "Namaz öncesi belirli organları usulüne uygun yıkamak",
+                    EZAN: "Namaz vaktinin girdiğini bildiren çağrı",
+                    KIYAM: "Namazda ayakta durmak",
+                    RÜKU: "Namazda elleri dizlere koyarak eğilmek",
+                    SECDE: "Namazda alın, burun, el, diz ve ayakları yere koymak",
+                    AYET: "Kur'an-ı Kerim'in surelerini oluşturan her bir cümle",
+                    SURE: "Ayetlerin bir araya gelmesiyle oluşan Kur'an bölümleri",
+                    CÜZ: "Kur'an-ı Kerim'in yirmi sayfalık otuz bölümünden her biri",
+                    MUSHAF: "Kur'an-ı Kerim'in iki kapak arasında kitap haline getirilmiş şekli",
+                    VAHİY: "Allah'ın emir ve mesajlarını peygamberlere bildirmesi",
+                    HAFIZ: "Kur'an-ı Kerim'in tamamını ezberleyen kimse",
+                    ORUÇ: "İmsaktan iftara kadar yeme, içme ve kötülüklerden uzak durmak",
+                    SAHUR: "Oruç tutmak için imsak vaktinden önce yenilen yemek",
+                    İFTAR: "Akşam ezanıyla orucun açıldığı vakit",
+                    ADALET: "Herkese hak ettiğini vermek, doğruluktan ayrılmamak",
+                    MERHAMET: "Canlılara karşı şefkat ve acıma duygusu beslemek",
+                    KADER: "Allah'ın her şeyi belli bir ölçü ve düzene göre takdir etmesi",
+                    TEVEKKÜL: "Gerekli çabayı gösterdikten sonra sonucu Allah'a bırakmak",
+                    ZEKAT: "Zengin Müslümanların mallarının belli bir kısmını ihtiyaç sahiplerine vermesi",
+                    SADAKA: "Allah rızası için yapılan her türlü maddi ve manevi iyilik",
+                    HİCRET: "Hz. Peygamber ve Müslümanların Mekke'den Medine'ye göç etmesi",
+                    ENSAR: "Medine'de Muhacirlere kucak açan yerli Müslümanlar",
+                    MUHACİR: "İnançları uğruna Mekke'den Medine'ye göç eden Müslümanlar",
+                    TECVİD: "Kur'an-ı Kerim'i harflerin hakkını vererek kurallı okumak",
+                    TAHARET: "Maddi ve manevi temizlik",
+                    GUSÜL: "Bütün vücudu hiç kuru yer kalmayacak şekilde yıkamak",
+                    TEYEMMÜM: "Su bulunmadığında temiz toprakla yapılan sembolik temizlik"
+                };
+
+                const available = unit.words.filter(w => defs[w]);
+                const sourceList = (available.length >= 8 ? available : unit.words).slice(0, 8);
+                const letters = ['A', 'B', 'C', 'Ç', 'D', 'E', 'F', 'G'];
+                const pairs = sourceList.map((w, idx) => ({
+                    letter: letters[idx],
+                    word: w,
+                    def: defs[w] || `${unit.name} kapsamında yer alan temel dini kavram`
+                }));
+
+                const shuffledDefs = [...pairs];
+                for (let i = shuffledDefs.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledDefs[i], shuffledDefs[j]] = [shuffledDefs[j], shuffledDefs[i]];
+                }
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Sol sütundaki kavramların başındaki harfleri, sağ sütundaki doğru tanımların yanındaki kutucuklara yazınız.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3 my-2">
+                        <div class="space-y-1.5">
+                            <span class="text-xs font-extrabold text-emerald-900 block mb-1">Kavramlar</span>
+                            ${pairs.map(p => `
+                                <div class="p-2 rounded-xl border border-emerald-300 bg-emerald-50/70 flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center shrink-0">${p.letter}</span>
+                                    <span class="font-extrabold text-xs text-slate-900 fit-box">${p.word}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-1.5">
+                            <span class="text-xs font-extrabold text-amber-900 block mb-1">Anlamları / Tanımları</span>
+                            ${shuffledDefs.map(d => `
+                                <div class="p-2 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                    <input type="text" maxlength="1" value="${showAns ? d.letter : ''}" placeholder="?" class="w-7 h-7 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-amber-500 bg-amber-50 text-slate-900'} text-center font-extrabold text-xs uppercase shrink-0 focus:outline-none">
+                                    <span class="text-[11px] font-medium text-slate-700 leading-snug fit-box">${d.def}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 9. EKSİK HARF TAMAMLAMA (Kavram Avcısı - 10 Kavram)
+            if (id === 'eksik_harf') {
+                const picked = unit.words
+                    .map(w => ({ orig: w, clean: w.replace(/[\s\-']/g, '').toLocaleUpperCase('tr-TR') }))
+                    .filter(w => w.clean.length >= 3)
+                    .slice(0, 10);
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Ünite kavramlarında eksik bırakılan harfleri bularak kutucukları tamamlayınız.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-2.5 my-2">
+                        ${picked.map((item, idx) => {
+                            const chars = item.clean.split('');
+                            const boxes = chars.map((ch, ci) => {
+                                const hide = (ci > 0) && ((ci + idx + state.seed) % 2 === 1);
+                                if (!hide) {
+                                    return `<div class="w-6 h-7 sm:w-7 sm:h-8 rounded-lg border-2 border-slate-700 bg-slate-100 flex items-center justify-center font-extrabold text-xs text-slate-900">${ch}</div>`;
+                                }
+                                return showAns
+                                    ? `<div class="w-6 h-7 sm:w-7 sm:h-8 rounded-lg border-2 border-emerald-600 bg-emerald-50 flex items-center justify-center font-extrabold text-xs text-emerald-700">${ch}</div>`
+                                    : `<input type="text" maxlength="1" placeholder="_" class="w-6 h-7 sm:w-7 sm:h-8 rounded-lg border-2 border-dashed border-emerald-600 bg-white text-center font-extrabold text-xs uppercase text-emerald-900 focus:outline-none">`;
+                            }).join('');
+                            return `
+                                <div class="p-2.5 rounded-xl border border-slate-300 bg-slate-50/70">
+                                    <span class="text-[10px] font-extrabold text-emerald-800 block mb-1">${idx + 1}. Kavram (${chars.length} Harf)</span>
+                                    <div class="flex flex-wrap gap-1">${boxes}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            // 10. AYET VE HADİS YAPBOZU (soz_yapbozu)
+            if (id === 'soz_yapbozu') {
+                const quoteBank = {
+                    dkab: [
+                        { src: "İhlas Suresi / Tevhid", text: "De ki O Allah birdir" },
+                        { src: "Bakara Suresi / Dua", text: "Rabbimiz bize dünyada ve ahirette iyilik ver" },
+                        { src: "Hadis-i Şerif / Güzel Ahlak", text: "İnsanlara merhamet etmeyene Allah da merhamet etmez" }
+                    ],
+                    tdb: [
+                        { src: "Hadis-i Şerif / Temizlik", text: "Temizlik imanın yarısıdır" },
+                        { src: "Hadis-i Şerif / İbadet", text: "Namaz dinin direğidir" },
+                        { src: "Hadis-i Şerif / Kul Hakkı", text: "Müslüman elinden ve dilinden emin olunan kimsedir" }
+                    ],
+                    siyer: [
+                        { src: "Alak Suresi / İlk Vahiy", text: "Yaratan Rabbinin adıyla oku" },
+                        { src: "Veda Hutbesi", text: "Bütün müminler birbirinin kardeşidir" },
+                        { src: "Hadis-i Şerif / Örnek Ahlak", text: "Ben güzel ahlakı tamamlamak için gönderildim" }
+                    ],
+                    kuran: [
+                        { src: "Hadis-i Şerif / Kur'an Öğrenimi", text: "Sizin en hayırlınız Kur'an'ı öğrenen ve öğretendir" },
+                        { src: "Müzzemmil Suresi / Kıraat", text: "Kur'an'ı ağır ağır ve güzelce oku" },
+                        { src: "Bakara Suresi / Rehber", text: "Bu kitap muttakiler için yol göstericidir" }
+                    ]
+                };
+                const list = quoteBank[state.lesson] || quoteBank.dkab;
+                const q1 = list[(state.seed) % list.length];
+                const q2 = list[(state.seed + 1) % list.length];
+                const q3 = list[(state.seed + 2) % list.length];
+
+                const renderQuotePuzzle = (qObj, idx) => {
+                    const words = qObj.text.split(' ');
+                    const indexed = words.map((w, i) => ({ w, order: i + 1 }));
+                    const shuffled = [...indexed];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(rng() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    return `
+                        <div class="p-2.5 rounded-2xl border-2 border-slate-200 bg-slate-50/70 space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-extrabold text-emerald-900">${idx}. Ayet / Hadis Yapbozu</span>
+                                <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">${qObj.src}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${shuffled.map(item => `
+                                    <span class="px-2 py-0.5 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-800 shadow-sm fit-box">
+                                        <strong class="text-emerald-700">${item.order})</strong> ${item.w}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <input type="text" value="${showAns ? qObj.text : ''}" placeholder="Kelimeleri doğru sırayla cümle olarak yazınız..." class="w-full px-3 py-1.5 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-slate-400 bg-white text-slate-900 font-bold'} text-xs sm:text-sm focus:outline-none">
+                        </div>
+                    `;
+                };
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Karışık ve numaralı verilen kelimeleri anlamlı bir ayet meali veya hadis-i şerif oluşturacak şekilde sıralayarak yazınız.</p>
+                    <div class="space-y-3 my-1">
+                        ${renderQuotePuzzle(q1, 1)}
+                        ${renderQuotePuzzle(q2, 2)}
+                        ${renderQuotePuzzle(q3, 3)}
+                    </div>
+                `;
+            }
+
+            // 11. SİYER ZAMAN TÜNELİ (zaman_tuneli)
+            if (id === 'zaman_tuneli') {
+                const timelines = {
+                    dkab: ["Hz. Adem (a.s.)'in Yaratılışı", "Hz. Nuh (a.s.) ve Tufan İmtihanı", "Hz. İbrahim (a.s.)'in Tevhid Mücadelesi", "Hz. Musa (a.s.) ve İlahi Emirler", "Hz. İsa (a.s.)'nın Tebliği", "Son Peygamber Hz. Muhammed (s.a.v.)", "Kur'an-ı Kerim'in Tamamlanması"],
+                    tdb:  ["Niyet Etmek ve Besmele Çekmek", "Abdest Almak (Maddi Temizlik)", "Avret Yerlerini Örtmek ve Kıbleye Yönelmek", "İftitah Tekbiriyle Namaza Başlamak", "Kıyam, Kıraat, Rükû ve Secdeleri Yapmak", "Kâde-i Ahîre'de Tahiyyat Okumak", "Selam Vererek Namazı Tamamlamak"],
+                    siyer:["Peygamberimizin Doğumu (571)", "Hira'da İlk Vahyin Gelişi (610)", "Medine'ye Hicret (622)", "Bedir ve Uhud Mücadeleleri (624-625)", "Hudeybiye Antlaşması (628)", "Mekke'nin Fethi (630)", "Veda Hutbesi (632)"],
+                    kuran:["İlk Ayetlerin İndirilişi (Alak)", "Vahiy Katiplerince Yazılması", "Ramazan Aylarında Mukabele Edilmesi", "Hz. Ebubekir Döneminde Mushaf Yapılması", "Hz. Osman Döneminde Çoğaltılması", "Hareke ve Noktalama İşaretlerinin Konulması", "Günümüze Eksiksiz Ulaşması"]
+                };
+                const steps = timelines[state.lesson] || timelines.siyer;
+                const shuffled = steps.map((txt, i) => ({ txt, no: i + 1 }));
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Aşağıda karışık verilen olayları oluş sırasına göre 1'den 7'ye kadar merdiven basamaklarına yerleştiriniz.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3 my-1">
+                        <div class="p-2.5 rounded-2xl border border-amber-300 bg-amber-50/50 space-y-1.5">
+                            <span class="text-xs font-extrabold text-amber-900 block mb-1">Karışık Olay Kartları</span>
+                            ${shuffled.map((s, idx) => `
+                                <div class="p-1.5 rounded-xl bg-white border border-amber-300 text-xs font-bold text-slate-800 fit-box">
+                                    <span class="text-amber-700 font-extrabold">${['A','B','C','Ç','D','E','F'][idx]})</span> ${s.txt}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="p-2.5 rounded-2xl border border-emerald-300 bg-emerald-50/40 space-y-1.5">
+                            <span class="text-xs font-extrabold text-emerald-900 block mb-1">Kronolojik Merdiven Basamakları</span>
+                            ${steps.map((s, idx) => `
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
+                                    <input type="text" value="${showAns ? s : ''}" placeholder="${idx + 1}. aşamayı yazınız..." class="w-full px-2 py-1 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-slate-300 bg-white text-slate-900 font-bold'} text-xs focus:outline-none">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 12. KAVRAM DOMİNO TAŞLARI (kavram_domino)
+            if (id === 'kavram_domino') {
+                const dominoBank = {
+                    dkab: [
+                        { left: "BAŞLANGIÇ", right: "TEVHİD" },
+                        { left: "Allah'ın birliği", right: "RAHMAN" },
+                        { left: "Tüm varlıklara şefkat", right: "TEVEKKÜL" },
+                        { left: "Çaba + Allah'a güven", right: "İHLAS" },
+                        { left: "Sadece Allah rızası için yapmak", right: "EMANET" },
+                        { left: "Güvenilir olmak ve korumak", right: "ŞÜKÜR" },
+                        { left: "Nimetlere minnettarlık", right: "BİTİŞ" }
+                    ],
+                    tdb: [
+                        { left: "BAŞLANGIÇ", right: "TAHARET" },
+                        { left: "Maddi-manevi temizlik", right: "ABDEST" },
+                        { left: "Namaz öncesi yıkanma", right: "KIYAM" },
+                        { left: "Namazda ayakta durma", right: "RÜKÛ" },
+                        { left: "Elleri dizlere koyup eğilme", right: "SECDE" },
+                        { left: "Alnı yere koyma", right: "ORUÇ" },
+                        { left: "İmsaktan iftara ibadet", right: "BİTİŞ" }
+                    ],
+                    siyer: [
+                        { left: "BAŞLANGIÇ", right: "HİRA" },
+                        { left: "İlk vahyin geldiği mağara", right: "HİCRET" },
+                        { left: "Mekke'den Medine'ye göç", right: "ENSAR" },
+                        { left: "Medineli yardımcı müminler", right: "MUHACİR" },
+                        { left: "Mekke'den göç eden sahabeler", right: "SUFFE" },
+                        { left: "Mescid-i Nebevi okulu", right: "VEDA HUTBESİ" },
+                        { left: "Evrensel insan hakları mesajı", right: "BİTİŞ" }
+                    ],
+                    kuran: [
+                        { left: "BAŞLANGIÇ", right: "VAHİY" },
+                        { left: "İlahi mesajların bildirimi", right: "AYET" },
+                        { left: "Kur'an'ın en küçük cümlesi", right: "SURE" },
+                        { left: "Ayetlerden oluşan bölüm", right: "TECVİD" },
+                        { left: "Kur'an'ı güzel ve kurallı okuma", right: "MUKABELE" },
+                        { left: "Karşılıklı Kur'an okuma", right: "MUSHAF" },
+                        { left: "Kitaplaşmış Kur'an", right: "BİTİŞ" }
+                    ]
+                };
+                const chain = dominoBank[state.lesson] || dominoBank.dkab;
+                const shuffledMiddle = [...chain.slice(1, 6)];
+                for (let i = shuffledMiddle.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledMiddle[i], shuffledMiddle[j]] = [shuffledMiddle[j], shuffledMiddle[i]];
+                }
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Her domino taşının sağındaki kavramı, bir sonraki taşın solundaki tanımıyla eşleştirerek zinciri tamamlayınız.</p>
+                    <div class="space-y-2 my-1">
+                        ${chain.map((tile, idx) => {
+                            const isFixed = idx === 0 || idx === chain.length - 1;
+                            return `
+                                <div class="grid grid-cols-2 border-2 ${isFixed ? 'border-emerald-800 bg-emerald-50' : 'border-slate-700 bg-white'} rounded-xl overflow-hidden shadow-sm">
+                                    <div class="p-2 border-r-2 border-slate-700 flex items-center justify-center text-center text-xs font-bold fit-box">
+                                        ${isFixed || showAns ? `<span class="${showAns && !isFixed ? 'text-emerald-700 font-extrabold' : 'text-slate-900'}">${tile.left}</span>` : `<input type="text" placeholder="Tanımı yazınız..." class="w-full text-center text-xs font-bold bg-transparent focus:outline-none">`}
+                                    </div>
+                                    <div class="p-2 flex items-center justify-center text-center text-xs font-extrabold bg-amber-50/50 fit-box">
+                                        ${isFixed || showAns ? `<span class="${showAns && !isFixed ? 'text-emerald-700' : 'text-emerald-950'}">${tile.right}</span>` : `<input type="text" placeholder="Kavramı yazınız..." class="w-full text-center text-xs font-extrabold uppercase bg-transparent focus:outline-none">`}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-xl">
+                        <span class="text-[10px] font-extrabold text-amber-900 block mb-1">Yerleştirilecek Ara Domino Taşları:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${shuffledMiddle.map(t => `<span class="px-2 py-0.5 rounded-lg bg-white border border-amber-400 text-[11px] font-bold text-slate-800 fit-box">[ ${t.left} | <strong>${t.right}</strong> ]</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 13. KİMDİR BU ÖNDER? (kimdir_bu)
+            if (id === 'kimdir_bu') {
+                const leaders = {
+                    dkab: [
+                        { clues: ["Kur'an'da adı en çok geçen peygamberdir.", "Firavun'a karşı tevhid mücadelesi vermiştir.", "Asası ile Kızıldeniz'i ikiye yarmıştır."], ans: "Hz. Musa (a.s.)" },
+                        { clues: ["Gemi inşa ederek inananları tufandan kurtarmıştır.", "Sabır ve tebliğin en büyük örneklerindendir.", "Kur'an'da adına müstakil bir sure vardır."], ans: "Hz. Nuh (a.s.)" },
+                        { clues: ["'Halilullah' (Allah'ın dostu) lakabıyla anılır.", "Oğlu İsmail ile Kabe'yi inşa etmiştir.", "Tevhid inancını savunmuştur."], ans: "Hz. İbrahim (a.s.)" },
+                        { clues: ["Sabrı ile bütün insanlığa örnek olmuştur.", "Hastalıklara ve zorluklara şükürle göğüs germiştir.", "Daima Allah'a dua edip sığınmıştır."], ans: "Hz. Eyyüp (a.s.)" }
+                    ],
+                    tdb: [
+                        { clues: ["İslam'ın ilk müezzinidir.", "Ezanı ilk kez okuyan sahabedir.", "Sesiyle ve sadakatiyle tanınır."], ans: "Hz. Bilal-i Habeşi (r.a.)" },
+                        { clues: ["Peygamberimizin en yakın dostu ve ilk halifedir.", "Hicrette Sevr Mağarası'nda yol arkadaşıdır.", "'Sıddık' lakabıyla anılır."], ans: "Hz. Ebubekir (r.a.)" },
+                        { clues: ["Adaletiyle tanınan ikinci halifedir.", "'Fâruk' (hak ile batılı ayıran) lakabıyla bilinir.", "Hicri takvimi başlatmıştır."], ans: "Hz. Ömer (r.a.)" },
+                        { clues: ["Hendek Savaşı'nda hendek kazma fikrini vermiştir.", "İran asıllı büyük sahabedir.", "Peygamberimiz onu 'Ehl-i Beyt'ten saymıştır."], ans: "Hz. Selman-ı Farisi (r.a.)" }
+                    ],
+                    siyer: [
+                        { clues: ["Peygamberimize ilk inanan kişidir.", "Mekke döneminde malıyla İslam'a destek olmuştur.", "Müminlerin annesi olarak anılır."], ans: "Hz. Hatice (r.anha)" },
+                        { clues: ["Hicret gecesi Peygamberimizin yatağında yatmıştır.", "Çocuk yaşta iman eden ilk kişidir.", "İlmi ve cesaretiyle tanınır."], ans: "Hz. Ali (r.a.)" },
+                        { clues: ["Medine'ye gönderilen ilk İslam öğretmenidir.", "Akabe Biatları sonrası Medine'de tebliğ yapmıştır.", "Uhud Savaşı'nda şehit düşmüştür."], ans: "Hz. Mus'ab bin Umeyr (r.a.)" },
+                        { clues: ["Peygamberimizin süt annesidir.", "Peygamberimiz çocukluk yıllarını onun yanında geçirmiştir.", "Beni Sa'd kabilesindendir."], ans: "Hz. Halime (r.anha)" }
+                    ],
+                    kuran: [
+                        { clues: ["Peygamberimizin vahiy katiplerindendir.", "Kur'an'ın Mushaf haline getirilmesinde komisyon başkanıdır.", "Genç yaşta yabancı dil öğrenmesiyle tanınır."], ans: "Hz. Zeyd bin Sabit (r.a.)" },
+                        { clues: ["Üçüncü halifedir.", "Kur'an-ı Kerim'in çoğaltılıp merkezlere gönderilmesini sağlamıştır.", "Edep ve hayasıyla bilinir."], ans: "Hz. Osman (r.a.)" },
+                        { clues: ["Mekke'de Kur'an'ı açıktan ilk okuyan sahabedir.", "Kur'an tefsiri ve fıkıhta önde gelen alimlerdendir.", "Sesi çok güzeldi."], ans: "Hz. Abdullah bin Mesud (r.a.)" },
+                        { clues: ["Peygamberimizden sonra en çok hadis rivayet edenlerdendir.", "Müminlerin annesi ve büyük İslam alimesidir.", "Kur'an ayetlerinin anlaşılmasında kaynak olmuştur."], ans: "Hz. Aişe (r.anha)" }
+                    ]
+                };
+                const cards = leaders[state.lesson] || leaders.siyer;
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Verilen 3 ipucunu okuyarak anlatılan peygamber veya sahabenin kim olduğunu tahmin edip yazınız.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3 my-1">
+                        ${cards.map((c, idx) => `
+                            <div class="p-3 rounded-2xl border-2 border-emerald-200 bg-gradient-to-b from-emerald-50/50 to-white flex flex-col justify-between gap-2">
+                                <div>
+                                    <span class="text-xs font-extrabold text-emerald-900 block mb-1.5">🕌 ${idx + 1}. Önder Kimlik Kartı</span>
+                                    <ul class="space-y-1 text-[11px] text-slate-800">
+                                        ${c.clues.map((cl, i) => `<li class="p-1.5 rounded-lg bg-white border border-slate-200 fit-box"><strong>${i + 1}. İpucu:</strong> ${cl}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                <input type="text" value="${showAns ? c.ans : ''}" placeholder="Tahmininizi yazınız..." class="w-full px-2.5 py-1.5 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-amber-500 bg-amber-50/50 text-slate-900 font-bold'} text-center text-xs focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 14. TECVİD VE KURAL AVCISI (kural_avcisi)
+            if (id === 'kural_avcisi') {
+                const rulesByLesson = {
+                    dkab:  { title: "Allah'ın Güzel İsimleri (Esma-i Hüsna)", good: ["RAHMAN", "RAHİM", "SAMED", "ALİM", "KADİR", "BASİR", "SEMİ", "HALİK", "KERİM"], bad: ["KİTAP", "CAMİ", "MESCİT", "EZAN", "MİHRAP", "MİNBER"] },
+                    tdb:   { title: "Namazın Farzlarından Olanlar", good: ["KIYAM", "KIRAAT", "RÜKU", "SECDE", "NİYET", "TEKBİR", "KADE", "KIYAS", "KIBLE"], bad: ["ORUÇ", "ZEKAT", "KURBAN", "SAHUR", "İFTAR", "FİTRE"] },
+                    siyer: { title: "Medine Dönemi Kavramları", good: ["HİCRET", "ENSAR", "MUHACİR", "SUFFE", "MESCİT", "KUBA", "BEDİR", "UHUD", "HENDEK"], bad: ["FİL", "EBU LEHEB", "DARÜNNEDVE", "HABİBE", "EBREHE", "BOYKO"] },
+                    kuran: { title: "Tecvid Kuralları", good: ["İZHAR", "İDGAM", "İKLAP", "İHFA", "MED", "KALKALE", "GUNNE", "SEKTE", "RA"], bad: ["CÜZ", "MUSHAF", "HAFIZ", "MUKABELE", "SURE", "AYET"] }
+                };
+                const cfg = rulesByLesson[state.lesson] || rulesByLesson.kuran;
+                // 5x5 harf 'H' veya 'A' silueti oluşturan 9 doğru kutu:
+                const targetMask = [
+                    1,0,0,0,1,
+                    1,0,0,0,1,
+                    1,1,1,1,1,
+                    1,0,0,0,1,
+                    1,0,0,0,1
+                ];
+                let gi = 0, bi = 0;
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-3"><strong>Yönerge:</strong> Aşağıdaki tabloda yalnızca <strong>"${cfg.title}"</strong> grubuna ait olan kutuları boyayarak gizli harfi ortaya çıkarınız.</p>
+                    <div class="w-full max-w-[500px] print:max-w-[150mm] mx-auto auto-grid-5 border-2 border-slate-900 rounded-xl overflow-hidden bg-white shadow-sm my-3">
+                        ${targetMask.map((isGood) => {
+                            const txt = isGood ? cfg.good[gi++ % cfg.good.length] : cfg.bad[bi++ % cfg.bad.length];
+                            const cls = (showAns && isGood) ? 'ws-cell-active' : 'bg-white text-slate-800';
+                            return `<div onclick="this.classList.toggle('ws-cell-active')" class="cursor-pointer min-h-[68px] border border-slate-300 flex items-center justify-center text-[10px] sm:text-xs font-extrabold px-1.5 py-1.5 text-center select-none fit-box ${cls}">${txt}</div>`;
+                        }).join('')}
+                    </div>
+                    <div class="max-w-[500px] print:max-w-[150mm] mx-auto mt-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50/40 flex items-center justify-between gap-3">
+                        <span class="text-xs font-extrabold text-emerald-900 shrink-0">Ortaya Çıkan Gizli Harf:</span>
+                        <input type="text" value="${showAns ? 'H' : ''}" placeholder="Harfi yazınız..." class="w-32 px-3 py-1.5 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-slate-400 bg-white text-slate-900 font-bold'} text-center text-sm uppercase focus:outline-none">
+                    </div>
+                `;
+            }
+
+            // 15. İBADET AKIŞ ŞEMASI (akis_semasi)
+            if (id === 'akis_semasi') {
+                const flows = {
+                    dkab:  { title: "Tevekkül ve Başarı Akışı", steps: ["Niyet ve Hedef Belirlemek", "Planlı ve Düzenli Çalışmak", "Gerekli Tedbirleri Almak", "Sabırla Gayret Göstermek", "Allah'a Dua ve Tevekkül Etmek", "Sonuca Razı Olmak", "Başarıda Şükretmek"] },
+                    tdb:   { title: "Abdest Alma Akış Şeması", steps: ["Niyet Etmek ve Besmele Çekmek", "Elleri Bileklere Kadar Yıkamak", "Ağza ve Burna Su Vermek", "Yüzü Yıkamak", "Kolları Dirseklere Kadar Yıkamak", "Başı Mesh Etmek ve Kulakları Silmek", "Ayakları Topuklarla Yıkamak"] },
+                    siyer: { title: "Mescid-i Nebevi İnşası ve Kardeşlik", steps: ["Medine'ye Hicret ve Varış", "Devenin Çöktüğü Arsanın Alınması", "Mescidin Birlikte İnşa Edilmesi", "Ezanın Okunmaya Başlanması", "Ensar ve Muhacir Kardeşliği", "Suffe Mektebinin Kurulması", "Medine Sözleşmesinin İmzalanması"] },
+                    kuran: { title: "Kur'an Okuma (Tilavet) Adabı", steps: ["Abdest Alarak Hazırlanmak", "Temiz Bir Mekânda Kıbleye Yönelmek", "Euzü Besmele ile Başlamak", "Harfleri Mahrecinden Okumak", "Tecvid Kurallarına Uymak", "Anlamı Üzerinde Tefekkür Etmek", "Okunanları Hayata Aktarmak"] }
+                };
+                const flow = flows[state.lesson] || flows.tdb;
+                const shuffled = flow.steps.map((s, i) => `${i + 1}) ${s}`);
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> <strong>${flow.title}</strong> için karışık verilen 7 adımı ok yönünde doğru sırayla kutulara yazınız.</p>
+                    <div class="p-2 bg-amber-50 border border-amber-200 rounded-xl mb-2 flex flex-wrap gap-1.5 justify-center">
+                        ${shuffled.map(s => `<span class="px-2 py-0.5 rounded-lg bg-white border border-amber-300 text-[11px] font-bold text-slate-800 fit-box">${s.replace(/^\d+\)\s*/, '')}</span>`).join('')}
+                    </div>
+                    <div class="flex flex-col items-center gap-1 my-1">
+                        ${flow.steps.map((step, i) => `
+                            <div class="w-full max-w-lg flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center shrink-0">${i + 1}</span>
+                                <input type="text" value="${showAns ? step : ''}" placeholder="${i + 1}. adımı yazınız..." class="w-full px-3 py-1.5 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-slate-400 bg-white text-slate-900 font-bold'} text-xs focus:outline-none">
+                            </div>
+                            ${i < flow.steps.length - 1 ? '<span class="text-emerald-700 font-extrabold text-xs leading-none">⬇</span>' : ''}
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 16. HARF KÖPRÜSÜ (harf_koprusu)
+            if (id === 'harf_koprusu') {
+                const l1 = ["KAL", "MAL", "HAL", "HAK"];
+                const l2 = ["NUR", "DUR", "DUA"];
+                const l3 = ["YOL", "KOL", "KUL"];
+                const l4 = ["HAK", "HAL", "SAL", "SAF"];
+
+                const renderLadder = (arr, title) => `
+                    <div class="p-3 rounded-2xl border-2 border-slate-200 bg-slate-50/70 flex flex-col items-center gap-1.5">
+                        <span class="text-xs font-extrabold text-emerald-900 mb-0.5">${title}</span>
+                        ${arr.map((word, idx) => {
+                            const isEnd = idx === 0 || idx === arr.length - 1;
+                            return `
+                                <div class="flex gap-1.5 items-center">
+                                    ${word.split('').map(ch => `
+                                        <div class="w-8 h-8 rounded-lg border-2 flex items-center justify-center font-extrabold text-sm ${isEnd ? 'border-emerald-800 bg-emerald-100 text-emerald-950' : 'border-slate-500 bg-white text-emerald-700'}">
+                                            ${isEnd || showAns ? ch : '<input type="text" maxlength="1" placeholder="?" class="w-full text-center font-extrabold uppercase bg-transparent focus:outline-none">'}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${idx < arr.length - 1 ? '<span class="text-[10px] font-extrabold text-slate-400 leading-none">⬇ (1 harf değiştir)</span>' : ''}
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Her basamakta yalnızca <strong>1 harfi</strong> değiştirerek anlamlı kelimeler üzerinden başlangıç kelimesinden hedef dini kavrama ulaşınız.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3 my-2">
+                        ${renderLadder(l1, '1. Köprü: KAL ➔ HAK')}
+                        ${renderLadder(l2, '2. Köprü: NUR ➔ DUA')}
+                        ${renderLadder(l3, '3. Köprü: YOL ➔ KUL')}
+                        ${renderLadder(l4, '4. Köprü: HAK ➔ SAF')}
+                    </div>
+                `;
+            }
+
+            // 17. KARAR KAVŞAĞI LABİRENTİ (karar_kavsagi)
+            if (id === 'karar_kavsagi') {
+                const trees = {
+                    dkab:  { q1: "Allah'ın her şeyi görmesine 'Basar' denir.", a1: "D", q2: "Tevekkül hiç çalışmadan sadece beklemektir.", a2: "Y", q3: "Allah'ın bir ve tek olmasına 'Tevhid' denir.", a3: "D", gate: "2. KAPI (İHLAS)" },
+                    tdb:   { q1: "Su bulunmadığında teyemmüm yapılır.", a1: "D", q2: "Kıyam namazda eğilmek demektir.", a2: "Y", q3: "Beş vakit namaz günde beş kez kılınır.", a3: "D", gate: "2. KAPI (TAHARET)" },
+                    siyer: { q1: "İlk vahiy Hira Mağarası'nda gelmiştir.", a1: "D", q2: "Hicret Medine'den Mekke'ye yapılmıştır.", a2: "Y", q3: "Medineli yardımcı Müslümanlara 'Ensar' denir.", a3: "D", gate: "2. KAPI (ENSAR)" },
+                    kuran: { q1: "Kur'an'ın ilk suresi Fatiha Suresi'dir.", a1: "D", q2: "Kur'an-ı Kerim toplam 20 cüzden oluşur.", a2: "Y", q3: "Kur'an'ın en uzun suresi Bakara Suresi'dir.", a3: "D", gate: "2. KAPI (TECVİD)" }
+                };
+                const t = trees[state.lesson] || trees.dkab;
+                const gates = ["1. KAPI (TEVHİD)", t.gate, "3. KAPI (SABIR)", "4. KAPI (VEFA)"];
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Soruları Doğru (<strong>D</strong>) veya Yanlış (<strong>Y</strong>) olarak değerlendirip okları takip ederek doğru çıkış kapısını işaretleyiniz.</p>
+                    <div class="p-3.5 rounded-2xl border-2 border-emerald-200 bg-emerald-50/30 space-y-3 my-1">
+                        <div class="p-2.5 rounded-xl bg-white border-2 border-emerald-700 text-center font-bold text-xs sm:text-sm fit-box">
+                            <span class="text-emerald-800 block text-[11px] font-extrabold mb-1">1. KAVŞAK</span>
+                            ${t.q1}
+                            <div class="mt-1.5 flex justify-center gap-4 text-xs font-extrabold">
+                                <span class="px-3 py-1 rounded-lg ${showAns && t.a1==='D' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-900'}">D ➔ 2. Kavşağa Geç</span>
+                                <span class="px-3 py-1 rounded-lg bg-rose-100 text-rose-900">Y ➔ 4. Kapıya Git</span>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white border-2 border-amber-600 text-center font-bold text-xs sm:text-sm fit-box">
+                            <span class="text-amber-800 block text-[11px] font-extrabold mb-1">2. KAVŞAK</span>
+                            ${t.q2}
+                            <div class="mt-1.5 flex justify-center gap-4 text-xs font-extrabold">
+                                <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900">D ➔ 1. Kapıya Git</span>
+                                <span class="px-3 py-1 rounded-lg ${showAns && t.a2==='Y' ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-900'}">Y ➔ 3. Kavşağa Geç</span>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white border-2 border-sky-600 text-center font-bold text-xs sm:text-sm fit-box">
+                            <span class="text-sky-800 block text-[11px] font-extrabold mb-1">3. KAVŞAK</span>
+                            ${t.q3}
+                            <div class="mt-1.5 flex justify-center gap-4 text-xs font-extrabold">
+                                <span class="px-3 py-1 rounded-lg ${showAns && t.a3==='D' ? 'bg-emerald-600 text-white' : 'bg-sky-100 text-sky-900'}">D ➔ ${t.gate}</span>
+                                <span class="px-3 py-1 rounded-lg bg-rose-100 text-rose-900">Y ➔ 3. Kapıya Git</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                            ${gates.map(g => `
+                                <div onclick="this.classList.toggle('ws-cell-active')" class="cursor-pointer p-2.5 rounded-xl border-2 text-center font-extrabold text-xs fit-box ${showAns && g === t.gate ? 'border-emerald-700 bg-emerald-600 text-white' : 'border-slate-400 bg-white text-slate-800'}">
+                                    🚪 ${g}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 18. KAVRAM TERAZİSİ (kavram_terazisi)
+            if (id === 'kavram_terazisi') {
+                const pairs = [
+                    { good: "Doğruluk (Sıdk)", bad: "Yalan" },
+                    { good: "Tevazu (Alçakgönüllülük)", bad: "Kibir" },
+                    { good: "Cömertlik", bad: "Cimrilik" },
+                    { good: "Adalet", bad: "Zulüm" },
+                    { good: "Emanete Riayet", bad: "Hıyanet" },
+                    { good: "Sabır ve Metanet", bad: "Öfke ve İsyan" },
+                    { good: "Vefa ve Sadakat", bad: "Vefasızlık" },
+                    { good: "Şükür ve Kanaat", bad: "Nankörlük" }
+                ];
+                const shuffledBad = [...pairs.map(p => p.bad)];
+                for (let i = shuffledBad.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledBad[i], shuffledBad[j]] = [shuffledBad[j], shuffledBad[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Terazinin sol kefesindeki olumlu ahlaki değerlerin zıddı olan olumsuz davranışları sağ kefeye yazarak dengeyi kurunuz.</p>
+                    <div class="p-2 bg-amber-50 border border-amber-200 rounded-xl mb-2 flex flex-wrap justify-center gap-1.5">
+                        <span class="text-[11px] font-extrabold text-amber-900">Olumsuz Davranış Havuzu:</span>
+                        ${shuffledBad.map(b => `<span class="px-2 py-0.5 rounded bg-white border border-amber-400 text-[11px] font-bold text-slate-800">${b}</span>`).join('')}
+                    </div>
+                    <div class="space-y-1.5 my-1">
+                        ${pairs.map(p => `
+                            <div class="grid grid-cols-11 items-center gap-2">
+                                <div class="col-span-5 p-2 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-center font-extrabold text-xs text-emerald-950 fit-box">${p.good}</div>
+                                <div class="col-span-1 text-center font-extrabold text-base">⚖️</div>
+                                <div class="col-span-5">
+                                    <input type="text" value="${showAns ? p.bad : ''}" placeholder="Zıddını yazınız..." class="w-full p-2 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-rose-400 bg-white text-slate-900 font-bold'} text-center text-xs focus:outline-none">
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 19. SURE KİMLİK KARTI (sure_kimligi)
+            if (id === 'sure_kimligi') {
+                const surahs = [
+                    { name: "Fatiha Suresi", count: "7 Ayet", place: "Mekke", topic: "Kur'an'ın özeti, hamd ve dua" },
+                    { name: "İhlas Suresi", count: "4 Ayet", place: "Mekke", topic: "Allah'ın birliği ve tevhid inancı" },
+                    { name: "Kevser Suresi", count: "3 Ayet", place: "Mekke", topic: "Kur'an'ın en kısa suresi, şükür ve kurban" },
+                    { name: "Nas Suresi", count: "6 Ayet", place: "Mekke", topic: "İnsan ve cin şerrinden Allah'a sığınma" },
+                    { name: "Felak Suresi", count: "5 Ayet", place: "Mekke", topic: "Yaratılmışların ve hasetçilerin şerrinden sığınma" },
+                    { name: "Asr Suresi", count: "3 Ayet", place: "Mekke", topic: "İman, salih amel, hakkı ve sabrı tavsiye" },
+                    { name: "Fil Suresi", count: "5 Ayet", place: "Mekke", topic: "Kâbe'yi yıkmak isteyen fil ordusunun helakı" },
+                    { name: "Kureyş Suresi", count: "4 Ayet", place: "Mekke", topic: "Kureyş kabilesine verilen nimetler ve şükür" },
+                    { name: "Maun Suresi", count: "7 Ayet", place: "Mekke", topic: "Yetimi gözetmek ve gösterişten uzak durmak" },
+                    { name: "Nasr Suresi", count: "3 Ayet", place: "Medine", topic: "Mekke'nin fethi, Allah'ı tesbih ve istiğfar" }
+                ];
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Ayet sayısı, nüzul yeri ve ana konusu verilen 10 surenin adlarını kimlik kartlarının altına yazınız.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-2 my-1">
+                        ${surahs.map((s, idx) => `
+                            <div class="p-2 rounded-2xl border-2 border-emerald-200 bg-emerald-50/30 space-y-1">
+                                <span class="text-[11px] font-extrabold text-emerald-900 block">📖 ${idx + 1}. Sure Kimlik Kartı</span>
+                                <div class="text-[11px] space-y-0.5 text-slate-800">
+                                    <div><strong>Ayet Sayısı:</strong> ${s.count} &bull; <strong>Yer:</strong> ${s.place}</div>
+                                    <div class="fit-box"><strong>Ana Konusu:</strong> ${s.topic}</div>
+                                </div>
+                                <input type="text" value="${showAns ? s.name : ''}" placeholder="Sure adını yazınız..." class="w-full px-2 py-1 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-amber-500 bg-white text-slate-900 font-bold'} text-center text-xs focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 20. ANLAM HIRSIZI (anlam_hirsizi)
+            if (id === 'anlam_hirsizi') {
+                const texts = {
+                    dkab: {
+                        body: "Yüce Allah'ın her şeyi belli bir ölçüye göre takdir etmesine <strong>[1. Kaza]</strong> denir. İnsanın gerekli çabayı gösterdikten sonra sonucu Allah'a bırakması ise <strong>[2. İsraf]</strong> kavramıyla ifade edilir. Allah'ın bir ve tek olduğuna inanmaya <strong>[3. Gıybet]</strong>, O'na yönelip yardım istemeye ise <strong>[4. Haset]</strong> denir.<br><br>İnsanın iyilikleri sadece Allah rızası için yapmasına <strong>[5. Riya]</strong>, verilen nimetlere karşı gönülden teşekkür etmesine <strong>[6. Kibir]</strong>, zorluklara karşı direnç göstermesine <strong>[7. Tembellik]</strong> ve ihtiyaç sahiplerine gizlice yardım etmesine <strong>[8. Zulüm]</strong> adı verilir.<br><br>Allah'ın her şeyi bilmesine <strong>[9. Adalet]</strong>, her şeye gücünün yetmesine <strong>[10. Tevazu]</strong>, Kâbe etrafında yedi kez dönmeye <strong>[11. Oruç]</strong> ve Ramazan ayında verilen sadakaya <strong>[12. Zekat]</strong> (fıtır sadakası yerine) denir.",
+                        fixes: [
+                            { wrong: "Kaza", right: "Kader" },
+                            { wrong: "İsraf", right: "Tevekkül" },
+                            { wrong: "Gıybet", right: "Tevhid" },
+                            { wrong: "Haset", right: "Dua" },
+                            { wrong: "Riya", right: "İhlas" },
+                            { wrong: "Kibir", right: "Şükür" },
+                            { wrong: "Tembellik", right: "Sabır" },
+                            { wrong: "Zulüm", right: "Sadaka / İnfak" },
+                            { wrong: "Adalet", right: "İlim" },
+                            { wrong: "Tevazu", right: "Kudret" },
+                            { wrong: "Oruç", right: "Tavaf" },
+                            { wrong: "Zekat", right: "Fitre" }
+                        ]
+                    },
+                    tdb: {
+                        body: "Namazın dışındaki şartlardan biri temiz su ile <strong>[1. Oruç]</strong> almaktır. Namazda ayakta durmaya <strong>[2. Secde]</strong>, elleri dizlere koyarak eğilmeye <strong>[3. Kıyam]</strong> denir. Su bulunmadığında temiz toprakla yapılan temizliğe <strong>[4. Zekat]</strong> adı verilir.<br><br>Namaza başlarken alınan ilk tekbire <strong>[5. Selam]</strong>, alnı ve burnu yere koymaya <strong>[6. Kıraat]</strong>, namazda Kur'an okumaya <strong>[7. Rüku]</strong>, namazı bitirirken sağa ve sola dönmeye ise <strong>[8. Niyet]</strong> denir.<br><br>Oruca başlamadan önce yenen yemeğe <strong>[9. İftar]</strong>, orucun açıldığı vakte <strong>[10. Sahur]</strong>, sabah ezanıyla başlayan yasak vaktine <strong>[11. Vitir]</strong> ve Ramazan geceleri kılınan namaza <strong>[12. Bayram]</strong> namazı denir.",
+                        fixes: [
+                            { wrong: "Oruç", right: "Abdest" },
+                            { wrong: "Secde", right: "Kıyam" },
+                            { wrong: "Kıyam", right: "Rüku" },
+                            { wrong: "Zekat", right: "Teyemmüm" },
+                            { wrong: "Selam", right: "İftitah Tekbiri" },
+                            { wrong: "Kıraat", right: "Secde" },
+                            { wrong: "Rüku", right: "Kıraat" },
+                            { wrong: "Niyet", right: "Selam" },
+                            { wrong: "İftar", right: "Sahur" },
+                            { wrong: "Sahur", right: "İftar" },
+                            { wrong: "Vitir", right: "İmsak" },
+                            { wrong: "Bayram", right: "Teravih" }
+                        ]
+                    },
+                    siyer: {
+                        body: "Peygamberimize ilk vahiy <strong>[1. Sevr]</strong> Mağarası'nda gelmiştir. Mekke'den Medine'ye yapılan göçe <strong>[2. Fetih]</strong>, Medineli yardımcı Müslümanlara <strong>[3. Muhacir]</strong>, Mekke'den göç edenlere ise <strong>[4. Ensar]</strong> denir.<br><br>Medine'de inşa edilen ilk mescidin yanındaki ilim okuluna <strong>[5. Darünnedve]</strong>, Müslümanların ilk büyük zaferi olan savaşa <strong>[6. Mute]</strong>, Peygamberimizin tüm insanlığa seslendiği son konuşmaya <strong>[7. Akabe]</strong> ve güvenilirliği sebebiyle verilen lakaba <strong>[8. Sıddık]</strong> denir.<br><br>Peygamberimizin annesinin adı <strong>[9. Halime]</strong>, babasının adı <strong>[10. Ebu Talip]</strong>, ilk inanan hanımı <strong>[11. Aişe]</strong> ve ilk müezzini ise <strong>[12. Zeyd]</strong> (r.a.)'dır.",
+                        fixes: [
+                            { wrong: "Sevr", right: "Hira" },
+                            { wrong: "Fetih", right: "Hicret" },
+                            { wrong: "Muhacir", right: "Ensar" },
+                            { wrong: "Ensar", right: "Muhacir" },
+                            { wrong: "Darünnedve", right: "Suffe" },
+                            { wrong: "Mute", right: "Bedir" },
+                            { wrong: "Akabe", right: "Veda Hutbesi" },
+                            { wrong: "Sıddık", right: "Muhammedü'l-Emîn" },
+                            { wrong: "Halime", right: "Amine" },
+                            { wrong: "Ebu Talip", right: "Abdullah" },
+                            { wrong: "Aişe", right: "Hz. Hatice" },
+                            { wrong: "Zeyd", right: "Hz. Bilal-i Habeşi" }
+                        ]
+                    },
+                    kuran: {
+                        body: "Kur'an-ı Kerim'i oluşturan cümlelere <strong>[1. Cüz]</strong>, bu cümlelerden oluşan bölümlere <strong>[2. Mushaf]</strong> denir. Kur'an'ı kurallarına uygun güzel okumaya <strong>[3. İnfak]</strong>, tamamını ezberleyen kişiye ise <strong>[4. Müezzin]</strong> adı verilir.<br><br>Kur'an'ın her yirmi sayfasından oluşan bölümüne <strong>[5. Ayet]</strong>, karşılıklı takip ederek okumaya <strong>[6. Teyemmüm]</strong>, Kur'an'ın ilk suresine <strong>[7. Nas]</strong> ve en kısa suresine <strong>[8. Bakara]</strong> denir.<br><br>Kur'an'ın kalbi olarak bilinen sure <strong>[9. Kevser]</strong>, tevhid ilkesini özetleyen sure <strong>[10. Fil]</strong>, Kur'an'ın indirildiği mübarek gece <strong>[11. Miraç]</strong> ve ilk inen sure ise <strong>[12. Fatiha]</strong> suresidir.",
+                        fixes: [
+                            { wrong: "Cüz", right: "Ayet" },
+                            { wrong: "Mushaf", right: "Sure" },
+                            { wrong: "İnfak", right: "Tecvid" },
+                            { wrong: "Müezzin", right: "Hafız" },
+                            { wrong: "Ayet", right: "Cüz" },
+                            { wrong: "Teyemmüm", right: "Mukabele" },
+                            { wrong: "Nas", right: "Fatiha" },
+                            { wrong: "Bakara", right: "Kevser" },
+                            { wrong: "Kevser", right: "Yasin" },
+                            { wrong: "Fil", right: "İhlas" },
+                            { wrong: "Miraç", right: "Kadir Gecesi" },
+                            { wrong: "Fatiha", right: "Alak" }
+                        ]
+                    }
+                };
+                const item = texts[state.lesson] || texts.dkab;
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Aşağıdaki metnin içine gizlenmiş 12 yanlış kavramı tespit edip doğrularını altındaki kutulara yazınız.</p>
+                    <div class="p-3 rounded-2xl border-2 border-slate-300 bg-slate-50 text-[11px] sm:text-xs leading-relaxed text-slate-800 fit-box mb-2.5">
+                        ${item.body}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-1.5">
+                        ${item.fixes.map((f, idx) => `
+                            <div class="p-1.5 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                <span class="text-[11px] font-extrabold text-rose-700 shrink-0">${idx + 1}. (${f.wrong}) ➔</span>
+                                <input type="text" value="${showAns ? f.right : ''}" placeholder="Doğrusunu yazınız" class="w-full px-2 py-0.5 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-emerald-500 bg-white text-slate-900 font-bold'} text-[11px] focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 21. FARKLI OLANI BUL (farkli_olani_bul)
+            if (id === 'farkli_olani_bul') {
+                const groups = [
+                    { items: ["Cebrail", "Mikail", "İsrafil", "Abdest"], diff: "Abdest", reason: "Diğer üçü dört büyük melektendir." },
+                    { items: ["Kıyam", "Rüku", "Secde", "Oruç"], diff: "Oruç", reason: "Diğer üçü namazın rükünlerindendir." },
+                    { items: ["Tevrat", "Zebur", "İncil", "Hicret"], diff: "Hicret", reason: "Diğer üçü ilahi kitaplardandır." },
+                    { items: ["İzhar", "İdgam", "İhfa", "Zekat"], diff: "Zekat", reason: "Diğer üçü tecvid kurallarındandır." },
+                    { items: ["Bedir", "Uhud", "Hendek", "Kuba"], diff: "Kuba", reason: "Diğer üçü savunma/mücadele savaşlarıdır, Kuba ilk mescittir." },
+                    { items: ["Doğruluk", "Adalet", "Merhamet", "Gıybet"], diff: "Gıybet", reason: "Diğer üçü güzel ahlak, gıybet ise kötü davranıştır." },
+                    { items: ["Sahur", "İftar", "Teravih", "Tavaf"], diff: "Tavaf", reason: "Diğer üçü oruçla, tavaf ise hac/umre ile ilgilidir." },
+                    { items: ["Fatiha", "İhlas", "Kevser", "Suffe"], diff: "Suffe", reason: "Diğer üçü Kur'an suresi, Suffe ise eğitim mekânıdır." },
+                    { items: ["Hz. Ebubekir", "Hz. Ömer", "Hz. Osman", "Hz. Musa"], diff: "Hz. Musa", reason: "Diğer üçü halife sahabe, Hz. Musa ise peygamberdir." },
+                    { items: ["Sıdk", "Emanet", "Fetanet", "İsraf"], diff: "İsraf", reason: "Diğer üçü peygamberlerin sıfatlarındandır." }
+                ];
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Her gruptaki dörtlü kavramdan anlamca dışarıda kalan farklı kavramı işaretleyip nedenini yazınız.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2 my-1">
+                        ${groups.map((g, idx) => `
+                            <div class="p-2 rounded-2xl border border-slate-300 bg-slate-50/60 space-y-1.5">
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1">
+                                    ${g.items.map(it => `
+                                        <div onclick="this.classList.toggle('ws-cell-active')" class="cursor-pointer py-1 px-1 rounded-lg border-2 text-center font-extrabold text-[10px] sm:text-[11px] fit-box ${showAns && it === g.diff ? 'border-emerald-600 bg-emerald-100 text-emerald-900' : 'border-slate-300 bg-white text-slate-800'}">${it}</div>
+                                    `).join('')}
+                                </div>
+                                <input type="text" value="${showAns ? `${g.diff}: ${g.reason}` : ''}" placeholder="${idx + 1}. grup farklı kavram ve nedeni..." class="w-full px-2 py-1 rounded-lg border border-slate-300 bg-white text-[11px] font-semibold ${showAns ? 'text-emerald-700 font-extrabold' : 'text-slate-800'} focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 22. ERDEM ÇARKI (erdem_carki)
+            if (id === 'erdem_carki') {
+                const roots = {
+                    dkab:  { core: "ADALET", leaves: ["Hakça paylaşım yapmak", "Tarafsız karar vermek", "Kurallara uymak", "Haksızlığa karşı durmak", "Sıraya ve emeğe saygı duymak", "Ölçü ve tartıda dürüst olmak", "Herkese hakkını vermek", "Görev dağılımını dengeli yapmak", "Önyargısız davranmak", "Kul hakkını gözetmek"] },
+                    tdb:   { core: "SORUMLULUK", leaves: ["İbadetlerini vaktinde yapmak", "Çevreyi temiz tutmak", "Sözünde durmak", "Kul hakkına dikkat etmek", "Emaneti özenle korumak", "Aile büyüklerine yardımcı olmak", "Ders ve ödevlerini aksatmamak", "Suyu ve elektriği israf etmemek", "Hatasını kabul edip telafi etmek", "Toplu alan kurallarına uymak"] },
+                    siyer: { core: "MERHAMET", leaves: ["Küçüklere şefkat göstermek", "Hayvanları korumak", "İhtiyaç sahibine yardım etmek", "Yaşlılara saygı duymak", "Hata yapanı affedebilmek", "Hastaları ziyaret etmek", "Yetim ve öksüzleri gözetmek", "Kırıcı sözden uzak durmak", "Doğaya ve bitkilere özen göstermek", "Zorda kalana destek olmak"] },
+                    kuran: { core: "DOĞRULUK", leaves: ["Her zaman doğru söylemek", "Emaneti korumak", "Ölçü ve tartıda dürüst olmak", "Gıybetten uzak durmak", "Verdiği sözü yerine getirmek", "Hile ve aldatmadan kaçınmak", "Özü ile sözü bir olmak", "Sınavda ve oyunda dürüst kalmak", "Yalan şahitlikten sakınmak", "Güvenilir bir insan olmak"] }
+                };
+                const r = roots[state.lesson] || roots.dkab;
+                const leafBox = (lv, num) => `
+                    <div class="p-2 rounded-2xl border-2 border-emerald-300 bg-emerald-50/40">
+                        <span class="text-[11px] font-extrabold text-emerald-900 block mb-0.5">🌿 ${num}. Yaprak</span>
+                        <input type="text" value="${showAns ? lv : ''}" placeholder="Günlük hayat davranışı..." class="w-full px-2.5 py-1.5 rounded-xl border border-emerald-400 bg-white text-xs font-bold ${showAns ? 'text-emerald-700' : 'text-slate-900'} focus:outline-none">
+                    </div>
+                `;
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Merkezdeki kök değere uygun 10 günlük hayat davranışını çarkın yapraklarına yazınız.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-2 my-1.5">
+                        ${r.leaves.slice(0, 4).map((lv, i) => leafBox(lv, i + 1)).join('')}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-2 my-2 items-center">
+                        ${leafBox(r.leaves[4], 5)}
+                        <div class="px-4 py-3 rounded-full border-4 border-amber-500 bg-amber-100 text-amber-950 font-extrabold text-sm sm:text-base shadow-md text-center fit-box">
+                            🎡 KÖK DEĞER:<br>${r.core}
+                        </div>
+                        ${leafBox(r.leaves[5], 6)}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-2 my-1.5">
+                        ${r.leaves.slice(6, 10).map((lv, i) => leafBox(lv, i + 7)).join('')}
+                    </div>
+                `;
+            }
+
+            // 23. AYET VE KONU EŞLEŞTİRME AĞACI (ayet_agaci)
+            if (id === 'ayet_agaci') {
+                const branches = [
+                    { branch: "İnanç Dalı", code: "A", verse: "De ki: O Allah birdir. (İhlas, 1)" },
+                    { branch: "İbadet Dalı", code: "B", verse: "Namazı dosdoğru kılın, zekâtı verin. (Bakara, 43)" },
+                    { branch: "Ahlak Dalı", code: "C", verse: "Şüphesiz Allah adaleti ve iyiliği emreder. (Nahl, 90)" },
+                    { branch: "Kıssa Dalı", code: "Ç", verse: "Andolsun Nuh'u kavmine gönderdik. (A'raf, 59)" },
+                    { branch: "Dua Dalı", code: "D", verse: "Rabbimiz! Bize dünyada da ahirette de iyilik ver. (Bakara, 201)" },
+                    { branch: "Kardeşlik Dalı", code: "E", verse: "Müminler ancak kardeştirler. (Hucurat, 10)" },
+                    { branch: "Sabır Dalı", code: "F", verse: "Allah sabredenlerle beraberdir. (Bakara, 153)" },
+                    { branch: "Şükür Dalı", code: "G", verse: "Eğer şükrederseniz elbette size nimetimi artırırım. (İbrahim, 7)" },
+                    { branch: "İlim Dalı", code: "Ğ", verse: "Yaratan Rabbinin adıyla oku! (Alak, 1)" },
+                    { branch: "Paylaşma Dalı", code: "H", verse: "Sevdiğiniz şeylerden infak etmedikçe iyiliğe erişemezsiniz. (Âl-i İmrân, 92)" }
+                ];
+                const shuffledVerses = [...branches];
+                for (let i = shuffledVerses.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledVerses[i], shuffledVerses[j]] = [shuffledVerses[j], shuffledVerses[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-1.5"><strong>Yönerge:</strong> Ağacın 10 dalının harflerini aşağıda verilen ilgili ayet meallerinin yanına yazınız.</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 print:grid-cols-5 gap-1.5 my-1.5">
+                        ${branches.map(b => `
+                            <div class="p-1.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-center fit-box">
+                                <span class="inline-block w-5 h-5 rounded-full bg-emerald-700 text-white font-extrabold text-[10px] leading-5 mb-0.5">${b.code}</span>
+                                <div class="font-extrabold text-[11px] text-emerald-950">🌳 ${b.branch}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="space-y-1 mt-1.5">
+                        ${shuffledVerses.map(v => `
+                            <div class="p-1.5 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                <input type="text" maxlength="1" value="${showAns ? v.code : ''}" placeholder="?" class="w-7 h-6 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-extrabold' : 'border-amber-500 bg-amber-50 text-slate-900 font-bold'} text-center text-xs uppercase shrink-0 focus:outline-none">
+                                <span class="text-[11px] font-semibold text-slate-800 fit-box">"${v.verse}"</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 25. ESMA-İ HÜSNA ŞİFRE ÇARKI (esma_carki)
+            if (id === 'esma_carki') {
+                const names = [
+                    { name: "ER-RAHMAN", mean: "Dünyada tüm varlıklara merhamet eden", code: "1" },
+                    { name: "EL-ALİM", mean: "Her şeyi en ince ayrıntısına kadar bilen", code: "2" },
+                    { name: "ES-SEMİ", mean: "Her şeyi hakkıyla işiten", code: "3" },
+                    { name: "EL-BASİR", mean: "Her şeyi eksiksiz gören", code: "4" },
+                    { name: "EL-KADİR", mean: "Her şeye gücü yeten", code: "5" },
+                    { name: "EL-HALİK", mean: "Her şeyi yoktan yaratan", code: "6" },
+                    { name: "EL-KERİM", mean: "İkramı ve cömertliği bol olan", code: "7" },
+                    { name: "ES-SAMED", mean: "Hiçbir şeye muhtaç olmayan, her şey O'na muhtaç olan", code: "8" },
+                    { name: "EL-GAFFAR", mean: "Günahları çokça bağışlayan", code: "9" },
+                    { name: "ER-REZZAK", mean: "Bütün canlılara rızık veren", code: "10" }
+                ];
+                const shuffledMeans = [...names];
+                for (let i = shuffledMeans.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledMeans[i], shuffledMeans[j]] = [shuffledMeans[j], shuffledMeans[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Allah'ın 10 güzel isminin başındaki numaraları şifre tablosundaki doğru Türkçe anlamlarının yanına yazınız.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2.5 my-1">
+                        <div class="space-y-1">
+                            <span class="text-xs font-extrabold text-emerald-900 block">✨ Esma-i Hüsna Çarkı</span>
+                            ${names.map(n => `
+                                <div class="p-1.5 rounded-xl border border-emerald-300 bg-emerald-50/70 flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-emerald-700 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0">${n.code}</span>
+                                    <span class="font-extrabold text-[11px] sm:text-xs text-emerald-950 fit-box">${n.name}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-xs font-extrabold text-amber-900 block">Türkçe Anlamları</span>
+                            ${shuffledMeans.map(m => `
+                                <div class="p-1.5 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                    <input type="text" maxlength="2" value="${showAns ? m.code : ''}" placeholder="?" class="w-7 h-6 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-extrabold' : 'border-amber-500 bg-amber-50 text-slate-900 font-bold'} text-center text-xs shrink-0 focus:outline-none">
+                                    <span class="text-[11px] font-medium text-slate-700 fit-box">${m.mean}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 26. SAHABE GÖREV KARTLARI (sahabe_gorev)
+            if (id === 'sahabe_gorev') {
+                const sahabes = [
+                    { name: "Hz. Ebubekir (r.a.)", title: "Es-Sıddık (İlk Halife ve Hicret Arkadaşı)", code: "A" },
+                    { name: "Hz. Ömer (r.a.)", title: "El-Faruk (Adaletiyle Tanınan Halife)", code: "B" },
+                    { name: "Hz. Osman (r.a.)", title: "Zinnureyn (Kur'an'ı Çoğaltan Halife)", code: "C" },
+                    { name: "Hz. Ali (r.a.)", title: "İlmin Kapısı (İlk Çocuk Müslüman)", code: "Ç" },
+                    { name: "Hz. Bilal-i Habeşi (r.a.)", title: "İslam'ın İlk Müezzini", code: "D" },
+                    { name: "Hz. Hatice (r.anha)", title: "Peygamberimize İlk İnanan Müminlerin Annesi", code: "E" },
+                    { name: "Hz. Mus'ab bin Umeyr (r.a.)", title: "Medine'ye Gönderilen İlk İslam Öğretmeni", code: "F" },
+                    { name: "Hz. Zeyd bin Sabit (r.a.)", title: "Kur'an'ı Mushaf Haline Getiren Heyet Başkanı", code: "G" },
+                    { name: "Hz. Selman-ı Farisi (r.a.)", title: "Hendek Savaşı'nda Hendek Kazma Fikrini Veren Sahabe", code: "Ğ" },
+                    { name: "Hz. Aişe (r.anha)", title: "En Çok Hadis Rivayet Eden Müminlerin Annesi", code: "H" }
+                ];
+                const shuffledTitles = [...sahabes];
+                for (let i = shuffledTitles.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledTitles[i], shuffledTitles[j]] = [shuffledTitles[j], shuffledTitles[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> 10 sahabe ile İslam tarihindeki öne çıkan görev ve unvanlarını harf koduyla eşleştiriniz.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2.5 my-1">
+                        <div class="space-y-1">
+                            ${sahabes.map(s => `
+                                <div class="p-1.5 rounded-xl border border-sky-300 bg-sky-50/70 flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-sky-700 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0">${s.code}</span>
+                                    <span class="font-extrabold text-[11px] sm:text-xs text-slate-900 fit-box">${s.name}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-1">
+                            ${shuffledTitles.map(t => `
+                                <div class="p-1.5 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                    <input type="text" maxlength="1" value="${showAns ? t.code : ''}" placeholder="?" class="w-7 h-6 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-extrabold' : 'border-amber-500 bg-amber-50 text-slate-900 font-bold'} text-center text-xs uppercase shrink-0 focus:outline-none">
+                                    <span class="text-[11px] font-medium text-slate-700 fit-box">${t.title}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 27. KAVRAM KOVANI (kavram_kovani - Her sayfada 2 örnek)
+            if (id === 'kavram_kovani') {
+                const hives = {
+                    dkab: [
+                        { center: "İ", outer: ["M", "A", "N", "H", "L", "S"], answers: ["İMAN", "İHLAS", "İLİM", "İHSAN", "İSLAM", "NİSA"] },
+                        { center: "A", outer: ["K", "D", "E", "R", "V", "F"], answers: ["KADER", "VEFA", "FARK", "DEFA", "REVA", "KARE"] }
+                    ],
+                    tdb: [
+                        { center: "A", outer: ["B", "D", "E", "S", "T", "N"], answers: ["ABDEST", "ADAB", "ADET", "SEBAT", "SEDAT", "SADE"] },
+                        { center: "M", outer: ["N", "A", "Z", "İ", "K", "Y"], answers: ["NAMAZ", "İMAM", "İMAN", "MİZAN", "ZAMAN", "NİZAM"] }
+                    ],
+                    siyer: [
+                        { center: "E", outer: ["N", "S", "A", "R", "M", "K"], answers: ["ENSAR", "MEKKE", "ESER", "KEREM", "SEMA", "ESMA"] },
+                        { center: "H", outer: ["İ", "C", "R", "E", "T", "A"], answers: ["HİCRET", "HİRA", "CİHAT", "RAHAT", "TARİH", "AHİRET"] }
+                    ],
+                    kuran: [
+                        { center: "S", outer: ["U", "R", "E", "İ", "H", "A"], answers: ["SURE", "SAHİFE", "ESRA", "HİSSE", "SERİ", "ESER"] },
+                        { center: "A", outer: ["Y", "E", "T", "F", "İ", "H"], answers: ["AYET", "FATİHA", "AFİYET", "HAYAT", "İTAAT", "TAHİYYAT"] }
+                    ]
+                };
+                const pair = hives[state.lesson] || hives.dkab;
+                const renderHiveCard = (h, idx) => `
+                    <div class="p-3 rounded-2xl border-2 border-amber-300 bg-amber-50/30 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-amber-950">🐝 ${idx}. Kavram Kovanı (Merkez Harf: <strong class="text-emerald-800">${h.center}</strong>)</span>
+                            <span class="text-[10px] font-bold text-slate-600">6 Kavram Türetiniz</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-12 print:grid-cols-12 gap-3 items-center">
+                            <div class="md:col-span-5 print:col-span-5 flex flex-col items-center gap-1.5">
+                                <div class="flex gap-1.5">
+                                    <div class="w-10 h-10 rounded-xl border-2 border-amber-500 bg-amber-100 flex items-center justify-center font-extrabold text-base text-amber-950">${h.outer[0]}</div>
+                                    <div class="w-10 h-10 rounded-xl border-2 border-amber-500 bg-amber-100 flex items-center justify-center font-extrabold text-base text-amber-950">${h.outer[1]}</div>
+                                </div>
+                                <div class="flex gap-1.5 items-center">
+                                    <div class="w-10 h-10 rounded-xl border-2 border-amber-500 bg-amber-100 flex items-center justify-center font-extrabold text-base text-amber-950">${h.outer[2]}</div>
+                                    <div class="w-12 h-12 rounded-xl border-4 border-emerald-700 bg-emerald-600 text-white flex items-center justify-center font-extrabold text-lg shadow">${h.center}</div>
+                                    <div class="w-10 h-10 rounded-xl border-2 border-amber-500 bg-amber-100 flex items-center justify-center font-extrabold text-base text-amber-950">${h.outer[3]}</div>
+                                </div>
+                                <div class="flex gap-1.5">
+                                    <div class="w-10 h-10 rounded-xl border-2 border-amber-500 bg-amber-100 flex items-center justify-center font-extrabold text-base text-amber-950">${h.outer[4]}</div>
+                                    <div class="w-10 h-10 rounded-xl border-2 border-amber-500 bg-amber-100 flex items-center justify-center font-extrabold text-base text-amber-950">${h.outer[5]}</div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-7 print:col-span-7 grid grid-cols-2 gap-2">
+                                ${h.answers.map((ans, i) => `
+                                    <input type="text" value="${showAns ? ans : ''}" placeholder="${i + 1}. Kavram" class="px-2.5 py-2 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-slate-400 bg-white text-slate-900 font-bold'} text-center text-xs uppercase focus:outline-none">
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Her kovandaki merkez (yeşil) harfi mutlaka kullanarak çevredeki petek harflerinden 6'şar adet dini/anlamlı kavram türetip yazınız.</p>
+                    <div class="space-y-3 my-1">
+                        ${renderHiveCard(pair[0], 1)}
+                        ${renderHiveCard(pair[1], 2)}
+                    </div>
+                `;
+            }
+
+            // 28. HÜKÜM VE DEĞER SEPETİ (hukum_sepeti)
+            if (id === 'hukum_sepeti') {
+                const cats = {
+                    dkab:  { c1: "İnanç / İbadet Kavramları", c2: "Ahlaki Değerler", items1: ["Tevhid", "Namaz", "Oruç", "Zekat", "Hac", "Dua", "İman", "Kurban", "Abdest", "Tevekkül"], items2: ["Adalet", "Merhamet", "Doğruluk", "Sabır", "Vefa", "Tevazu", "Cömertlik", "Saygı", "Emanet", "Yardımlaşma"] },
+                    tdb:   { c1: "Farz / Vacip Olanlar", c2: "Sünnet / Güzel Davranışlar", items1: ["Beş Vakit Namaz", "Ramazan Orucu", "Zekat", "Abdest", "Kurban", "Vitir", "Gusül", "Cuma Namazı", "Bayram Namazı", "Fitre"], items2: ["Misvak Kullanmak", "Selam Vermek", "Güler Yüz", "Cemaatle Namaz", "İnfak", "Dua Etmek", "Teravih", "İtikaf", "Hasta Ziyareti", "Sıla-i Rahim"] },
+                    siyer: { c1: "Mekke Dönemi", c2: "Medine Dönemi", items1: ["Doğum (571)", "Hira İlk Vahiy", "İlk Müslümanlar", "Boykot Yılları", "Miraç", "Akabe Biatları", "Darü'l-Erkam", "Habeşistan Hicreti", "Hüzün Yılı", "Taif Yolculuğu"], items2: ["Hicret", "Mescid-i Nebevi", "Ensar-Muhacir", "Suffe", "Bedir", "Uhud", "Hendek", "Hudeybiye", "Mekke'nin Fethi", "Veda Hutbesi"] },
+                    kuran: { c1: "Kur'an'ın Yapısı", c2: "Tecvid ve Okuma", items1: ["Ayet", "Sure", "Cüz", "Mushaf", "Fatiha", "Bakara", "İhlas", "Kevser", "Hizip", "Secde Ayeti"], items2: ["İzhar", "İdgam", "İklap", "İhfa", "Med", "Tertil", "Kalkale", "Gunne", "Sekte", "Mukabele"] }
+                };
+                const cfg = cats[state.lesson] || cats.dkab;
+                const mixed = [...cfg.items1, ...cfg.items2];
+                for (let i = mixed.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [mixed[i], mixed[j]] = [mixed[j], mixed[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Aşağıda karışık verilen 20 kavramı doğru kategori sepetlerine (10'ar adet) ayırarak yazınız.</p>
+                    <div class="p-2 bg-slate-100 border border-slate-300 rounded-xl flex flex-wrap justify-center gap-1 mb-2.5">
+                        ${mixed.map(m => `<span class="px-2 py-0.5 rounded-lg bg-white border border-slate-400 text-[10px] sm:text-[11px] font-bold text-slate-800 fit-box">${m}</span>`).join('')}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3">
+                        <div class="p-2.5 rounded-2xl border-2 border-emerald-600 bg-emerald-50/40 space-y-1">
+                            <span class="text-xs font-extrabold text-emerald-950 block text-center mb-1">🧺 1. Sepet: ${cfg.c1}</span>
+                            ${cfg.items1.map((it, i) => `<input type="text" value="${showAns ? it : ''}" placeholder="${i+1}." class="w-full px-2.5 py-0.5 rounded-lg border border-emerald-300 bg-white text-xs font-bold ${showAns ? 'text-emerald-700' : 'text-slate-900'}">`).join('')}
+                        </div>
+                        <div class="p-2.5 rounded-2xl border-2 border-amber-500 bg-amber-50/40 space-y-1">
+                            <span class="text-xs font-extrabold text-amber-950 block text-center mb-1">🧺 2. Sepet: ${cfg.c2}</span>
+                            ${cfg.items2.map((it, i) => `<input type="text" value="${showAns ? it : ''}" placeholder="${i+1}." class="w-full px-2.5 py-0.5 rounded-lg border border-amber-300 bg-white text-xs font-bold ${showAns ? 'text-emerald-700' : 'text-slate-900'}">`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 29. KISSA KAHRAMANLARI DEDEKTİFİ (kissa_dedektifi)
+            if (id === 'kissa_dedektifi') {
+                const stories = [
+                    { symbol: "🚢 Gemi ve Tufan Mucizesi", prophet: "Hz. Nuh (a.s.)", code: "1" },
+                    { symbol: "🔥 Ateşin Serin ve Selamet Olması", prophet: "Hz. İbrahim (a.s.)", code: "2" },
+                    { symbol: "🪄 Asa ve Kızıldeniz Mucizesi", prophet: "Hz. Musa (a.s.)", code: "3" },
+                    { symbol: "🌾 Rüya Yorumu ve Sabır İmtihanı", prophet: "Hz. Yusuf (a.s.)", code: "4" },
+                    { symbol: "🐋 Balığın Karnında Tesbih ve Dua", prophet: "Hz. Yunus (a.s.)", code: "5" },
+                    { symbol: "👑 Kuşların Dilini Bilme ve Hikmet", prophet: "Hz. Süleyman (a.s.)", code: "6" },
+                    { symbol: "🌿 Hastalık ve Zorlukta Örnek Sabır", prophet: "Hz. Eyyüp (a.s.)", code: "7" },
+                    { symbol: "💧 Zemzem Suyu ve Kabe İnşası", prophet: "Hz. İsmail (a.s.)", code: "8" },
+                    { symbol: "🕊️ İlk İnsan ve Tövbe Duası", prophet: "Hz. Adem (a.s.)", code: "9" },
+                    { symbol: "🌟 İncil ve Şifa Mucizeleri", prophet: "Hz. İsa (a.s.)", code: "10" }
+                ];
+                const shuffledP = [...stories];
+                for (let i = shuffledP.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledP[i], shuffledP[j]] = [shuffledP[j], shuffledP[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Sol taraftaki 10 kıssa sembolü ve olayını, sağ taraftaki ilgili peygamber ile eşleştiriniz.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2.5 my-1">
+                        <div class="space-y-1">
+                            ${stories.map(s => `
+                                <div class="p-1.5 rounded-xl border border-amber-300 bg-amber-50/60 flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-amber-600 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0">${s.code}</span>
+                                    <span class="font-bold text-[11px] sm:text-xs text-slate-900 fit-box">${s.symbol}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-1">
+                            ${shuffledP.map(p => `
+                                <div class="p-1.5 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                    <input type="text" maxlength="2" value="${showAns ? p.code : ''}" placeholder="?" class="w-7 h-6 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-extrabold' : 'border-emerald-500 bg-emerald-50/40 text-slate-900 font-bold'} text-center text-xs shrink-0 focus:outline-none">
+                                    <span class="text-[11px] sm:text-xs font-extrabold text-emerald-950 fit-box">${p.prophet}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 30. KUTSAL MEKAN KROKİ BULMACASI (mekan_krokisi)
+            if (id === 'mekan_krokisi') {
+                const spots = [
+                    { code: "A", name: "Kâbe-i Muazzama", clue: "Müslümanların kıblesi olan Beytullah" },
+                    { code: "B", name: "Hacerü'l-Esved", clue: "Tavafın başlangıç ve bitiş noktasındaki siyah taş" },
+                    { code: "C", name: "Safa – Merve", clue: "Hacda aralarında sa'y yapılan iki tepe" },
+                    { code: "Ç", name: "Ravza-i Mutahhara", clue: "Mescid-i Nebevi içindeki Peygamberimizin kabri ve minberi arası" },
+                    { code: "D", name: "Arafat", clue: "Haccın en önemli farzı olan vakfenin yapıldığı bölge" },
+                    { code: "E", name: "Mina", clue: "Hac ibadeti sırasında şeytan taşlama ve kurban kesiminin yapıldığı yer" },
+                    { code: "F", name: "Makam-ı İbrahim", clue: "Hz. İbrahim'in Kâbe'yi inşa ederken üzerine bastığı taşın bulunduğu yer" },
+                    { code: "G", name: "Mescid-i Aksa", clue: "Kudüs'te bulunan, Müslümanların ilk kıblesi olan kutsal mescit" }
+                ];
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Kutsal mekan krokisindeki 8 harfli bölümün isimlerini aşağıdaki ipuçlarından yararlanarak yazınız.</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-2 p-2.5 rounded-2xl border-2 border-emerald-800 bg-emerald-50/40 my-2">
+                        ${spots.map(sp => `
+                            <div class="p-1.5 rounded-xl bg-white border-2 border-emerald-600 text-center space-y-0.5">
+                                <span class="inline-block w-6 h-6 rounded-full bg-emerald-700 text-white font-extrabold text-xs leading-6">${sp.code}</span>
+                                <div class="text-[10px] text-slate-500 font-bold">Kroki Bölümü</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="space-y-1.5">
+                        ${spots.map(sp => `
+                            <div class="p-1.5 rounded-xl border border-slate-300 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="text-[11px] sm:text-xs text-slate-800 fit-box"><strong class="text-emerald-800">${sp.code}) İpucu:</strong> ${sp.clue}</div>
+                                <input type="text" value="${showAns ? sp.name : ''}" placeholder="Mekan adını yazınız..." class="sm:w-52 px-2 py-1 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-amber-500 bg-amber-50/40 text-slate-900 font-bold'} text-xs focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 32. HADİS TAMAMLAMA ZİNCİRİ (hadis_zinciri - 10 Hadis)
+            if (id === 'hadis_zinciri') {
+                const hadiths = [
+                    { start: "Sizin en hayırlınız...", end: "Kur'an'ı öğrenen ve öğretendir.", code: "1" },
+                    { start: "Temizlik...", end: "imanın yarısıdır.", code: "2" },
+                    { start: "Veren el...", end: "alan elden üstündür.", code: "3" },
+                    { start: "İnsanlara merhamet etmeyene...", end: "Allah da merhamet etmez.", code: "4" },
+                    { start: "Kolaylaştırınız, zorlaştırmayınız...", end: "müjdeleyiniz, nefret ettirmeyiniz.", code: "5" },
+                    { start: "Müslüman, elinden ve dilinden...", end: "insanların güvende olduğu kimsedir.", code: "6" },
+                    { start: "Ameller...", end: "niyetlere göredir.", code: "7" },
+                    { start: "Güzel söz...", end: "sadakadır.", code: "8" },
+                    { start: "Hiçbiriniz kendisi için istediğini...", end: "kardeşi için de istemedikçe iman etmiş olmaz.", code: "9" },
+                    { start: "Din...", end: "güzel ahlaktır.", code: "10" }
+                ];
+                const shuffledEnds = [...hadiths];
+                for (let i = shuffledEnds.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [shuffledEnds[i], shuffledEnds[j]] = [shuffledEnds[j], shuffledEnds[i]];
+                }
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-2"><strong>Yönerge:</strong> Sol sütundaki 10 hadis-i şerif başlangıcını sağ sütundaki doğru devam ifadeleriyle numara (1–10) vererek birleştiriniz.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3 my-2">
+                        <div class="space-y-1.5">
+                            ${hadiths.map(h => `
+                                <div class="p-2 rounded-xl border border-emerald-300 bg-emerald-50/60 flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-emerald-700 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0">${h.code}</span>
+                                    <span class="text-[11px] font-bold text-slate-900 leading-tight fit-box">${h.start}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-1.5">
+                            ${shuffledEnds.map(e => `
+                                <div class="p-2 rounded-xl border border-slate-300 bg-white flex items-center gap-2">
+                                    <input type="text" maxlength="2" value="${showAns ? e.code : ''}" placeholder="?" class="w-7 h-7 rounded-lg border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-extrabold' : 'border-amber-500 bg-amber-50 text-slate-900 font-bold'} text-center text-xs shrink-0 focus:outline-none">
+                                    <span class="text-[11px] font-semibold text-slate-800 leading-tight fit-box">${e.end}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 33. DEĞERLER DEDEKTİFİ SENARYOSU (deger_senaryosu - Ünite ve Derse Özel)
+            if (id === 'deger_senaryosu') {
+                const scenarioMap = {
+                    dkab_5_u1: [
+                        { text: "Zeynep, gökyüzündeki yıldızların, gece-gündüzün ve mevsimlerin kusursuz düzenini izleyip Allah'ın yaratma gücüne hayranlık duydu.", value: "Tefekkür ve Allah İnancı" },
+                        { text: "Kerem, kimsenin görmediği bir anda bile Yüce Allah'ın her şeyi işitip gördüğünü (Semi ve Basar) bilerek doğru davrandı.", value: "İman Bilinci ve İhlas" },
+                        { text: "Ayşe, sahip olduğu nimetler ve sağlığı için her gün ellerini açıp Allah'a içtenlikle teşekkür etti.", value: "Şükür ve Dua" },
+                        { text: "Yusuf, yalnızca bir olan Allah'a sığınıp İhlas Suresi'nin anlamını hayatına rehber edindi.", value: "Tevhid İnancı" }
+                    ],
+                    dkab_5_u2: [
+                        { text: "Emir, ezan okununca oyununu bırakıp temiz bir şekilde abdest alarak camide cemaate katıldı.", value: "Namaz Bilinci ve Sorumluluk" },
+                        { text: "Elif, namazda kıyam, rüku ve secdeyi acele etmeden, huzur içinde yerine getirdi.", value: "Huşu ve İbadet Adabı" },
+                        { text: "Hasan, dedesiyle birlikte mahalle camisinin temiz tutulmasına özen gösterdi.", value: "Temizlik ve Cami Adabı" },
+                        { text: "Merve, beş vakit namazını aksatmadan kılarak Allah'a olan bağlılığını gösterdi.", value: "İbadette Devamlılık" }
+                    ],
+                    dkab_5_u3: [
+                        { text: "Zehra, Kur'an-ı Kerim'in ilk emri olan 'Oku' (İkra) gereğince her gün düzenli kitap ve Kur'an okudu.", value: "İlim ve Okuma Sevgisi" },
+                        { text: "Ali, Fatiha Suresi'nin anlamını öğrenerek namazlarında ne okuduğunu düşünmeye başladı.", value: "Kur'an'ı Anlama Bilinci" },
+                        { text: "Selma, Mushaf'ı temiz bir yerde muhafaza edip ona saygıyla yaklaştı.", value: "Kur'an'a Saygı" },
+                        { text: "Ömer, vahyin insanlığa doğru yolu gösteren bir rehber olduğunu arkadaşlarına anlattı.", value: "Vahiy ve Rehberlik" }
+                    ],
+                    dkab_5_u4: [
+                        { text: "Taha, Hz. Nuh (a.s.) gibi zorluklar karşısında yılmadan sabırla görevini sürdürdü.", value: "Sabır ve Azim" },
+                        { text: "Betül, Hz. Yusuf (a.s.) kıssasından ders çıkararak kendisine yapılan haksızlığı affetti.", value: "Affedicilik ve Güzel Ahlak" },
+                        { text: "Furkan, Hz. İbrahim (a.s.) gibi doğruları savunurken nazik ve güzel bir dil kullandı.", value: "Hikmetli Tebliğ ve Cesaret" },
+                        { text: "Sude, peygamberlerin insanlara en güzel örnek olduğunu bilerek onların ahlakını örnek aldı.", value: "Örnek Alma ve Sadakat" }
+                    ],
+                    dkab_6_u1: [
+                        { text: "Murat, peygamberlerin 'Sıdk' sıfatını örnek alarak her şartta doğruyu söyledi.", value: "Doğruluk (Sıdk)" },
+                        { text: "Esra, kendisine bırakılan emaneti 'Emanet' bilinciyle sahibine eksiksiz teslim etti.", value: "Güvenilirlik (Emanet)" },
+                        { text: "Kaan, tüm ilahi kitapların Allah tarafından gönderildiğine inanarak saygı gösterdi.", value: "İlahi Kitaplara İman" },
+                        { text: "Derya, peygamberlerin tebliğ görevini hiçbir çıkar beklemeden yaptığını öğrendi.", value: "İhlas ve Tebliğ" }
+                    ],
+                    dkab_6_u2: [
+                        { text: "Berke, Ramazan ayında sahura kalkıp oruç tutarak nefsini sabırla eğitti.", value: "Sabır ve İrade" },
+                        { text: "Nisa, iftar vaktinde komşularıyla yemeğini paylaşarak Ramazan sevincini büyüttü.", value: "Paylaşma ve Kardeşlik" },
+                        { text: "Arda, ailesiyle birlikte ihtiyaç sahiplerine fitre ulaştırılmasına destek oldu.", value: "Yardımlaşma ve İnfak" },
+                        { text: "Hanne, Kadir Gecesi'ni dua ve mukabele ile değerlendirdi.", value: "Maneviyat ve Şükür" }
+                    ],
+                    dkab_6_u3: [
+                        { text: "Zeynep, oyun kurarken kimseyi dışlamadan herkese eşit hak tanıdı.", value: "Adalet" },
+                        { text: "Ayşe, soğuk kış gününde sokaktaki kediler için mama ve su bıraktı.", value: "Merhamet ve Şefkat" },
+                        { text: "Mert, arkadaşına verdiği sözü ne olursa olsun yerine getirdi.", value: "Vefa ve Güven" },
+                        { text: "Sena, büyüklerinin sözünü kesmeden dinleyip onlara nazik davrandı.", value: "Saygı" }
+                    ],
+                    dkab_7_u1: [
+                        { text: "Burak, her davranışının yazıldığını (Kiramen Katibin) bilerek söz ve işlerine dikkat etti.", value: "Sorumluluk ve Oto-kontrol" },
+                        { text: "İrem, 'Dünya ahiretin tarlasıdır' anlayışıyla çevresine faydalı işler yaptı.", value: "Ahiret Bilinci ve Salih Amel" },
+                        { text: "Eren, zor zamanlarda meleklerin ve Allah'ın yardımına güvenerek umudunu korudu.", value: "Ümit ve İman" },
+                        { text: "Aslı, Mizan'da iyiliklerinin ağır basması için kul hakkından titizlikle kaçındı.", value: "Kul Hakkı ve Adalet" }
+                    ],
+                    dkab_7_u2: [
+                        { text: "Halil, farklı renk ve dillerden insanların Kâbe'de bir araya gelmesinin eşitlik mesajını kavradı.", value: "Kardeşlik ve Eşitlik" },
+                        { text: "Sare, Kurban Bayramı'nda kesilen kurban etini ihtiyaç sahibi komşularla paylaştı.", value: "Paylaşma ve Dayanışma" },
+                        { text: "Yasin, hac ibadetindeki ihramın dünya gösterişinden arınmayı öğrettiğini fark etti.", value: "Tevazu ve Arınma" },
+                        { text: "Ceren, Arafat'ta yapılan duaların birlik ve beraberliği güçlendirdiğini gördü.", value: "Birlik ve Dua" }
+                    ],
+                    dkab_8_u1: [
+                        { text: "Yusuf, derslerine düzenli çalışıp tedbirini aldıktan sonra sınav sonucunu Allah'a bıraktı.", value: "Tevekkül ve Emek" },
+                        { text: "Ece, kendi özgür iradesiyle yaptığı seçimlerin sorumluluğunu üstlendi.", value: "Cüzi İrade ve Sorumluluk" },
+                        { text: "Tuna, rızkın helal yoldan ve alın teriyle kazanılması gerektiğini savundu.", value: "Helal Kazanç ve Gayret" },
+                        { text: "Melis, sağlık ve ömrün birer emanet olduğunu bilerek sağlığına dikkat etti.", value: "Tedbir ve Şükür" }
+                    ],
+                    dkab_8_u2: [
+                        { text: "Kemal, mahallesindeki ihtiyaç sahibi öğrencilere gizlice burs vererek destek oldu.", value: "İnfak ve Sadaka" },
+                        { text: "Gül, 'Veren el alan elden üstündür' hadisini ilke edinerek paylaşmayı sevdi.", value: "Cömertlik ve Yardımlaşma" },
+                        { text: "Sinan, okul bahçesine herkesin faydalanabileceği kalıcı bir çeşme ve ağaç kazandırdı.", value: "Sadaka-i Cariye" },
+                        { text: "Lale, zekâtın toplumdaki zengin-fakir arasındaki sevgi bağını güçlendirdiğini gördü.", value: "Sosyal Dayanışma ve Adalet" }
+                    ],
+                    dkab_8_u3: [
+                        { text: "Alp, trafik kurallarına uyarak hem kendi canını hem de başkalarının canını korudu.", value: "Canın Korunması" },
+                        { text: "Buse, zararlı alışkanlıklardan uzak durarak aklını ve sağlığını muhafaza etti.", value: "Aklın Korunması" },
+                        { text: "Deniz, arkadaşının eşyasına zarar vermeyip başkasının malına saygı gösterdi.", value: "Malın Korunması" },
+                        { text: "Naz, aile içi sevgi ve saygının toplumun temeli olduğunu savundu.", value: "Neslin ve Ailenin Korunması" }
+                    ],
+                    tdb_5_u1: [
+                        { text: "Cem, imanın altı şartını öğrenip kalbiyle tasdik etti.", value: "İman Esaslarına Bağlılık" },
+                        { text: "Eda, her işine Kelime-i Tevhid ve Besmele bilinciyle başladı.", value: "Tevhid Bilinci" },
+                        { text: "Umut, peygamberlere ve ilahi kitaplara inanmanın insanı güzelleştirdiğini fark etti.", value: "İnanç ve Doğruluk" },
+                        { text: "Ela, ahiret gününe inanmanın insanı daha sorumlu kıldığını anladı.", value: "Ahiret ve Sorumluluk" }
+                    ],
+                    tdb_5_u2: [
+                        { text: "Can, 'Temizlik imanın yarısıdır' hadisi gereği bedenini ve çevresini temiz tuttu.", value: "Taharet ve Temizlik" },
+                        { text: "İnci, su tasarrufuna dikkat ederek abdestini ölçülü suyla aldı.", value: "İsraftan Kaçınma ve Abdest" },
+                        { text: "Kuzey, su bulunmayan kamp ortamında teyemmümün bir kolaylık olduğunu öğrendi.", value: "İbadette Kolaylık" },
+                        { text: "Defne, diş temizliği (misvak/fırça) alışkanlığını düzenli hale getirdi.", value: "Kişisel Bakım ve Sünnet" }
+                    ],
+                    tdb_6_u1: [
+                        { text: "Berat, farz ibadetlerin yanında Peygamberimizin sünnetlerini de uygulamaya özen gösterdi.", value: "Sünnete Bağlılık" },
+                        { text: "Aylin, helal ve haram sınırlarına dikkat ederek dürüst bir yaşam sürdü.", value: "Helal Hassasiyeti" },
+                        { text: "Rüzgar, sorumluluk çağına (mükellefiyet) yaklaştıkça ibadet bilincini artırdı.", value: "Mükellefiyet Bilinci" },
+                        { text: "Yelda, mekruh davranışlardan kaçınarak güzel ahlakını korudu.", value: "Takva ve Özdenetim" }
+                    ],
+                    tdb_7_u1: [
+                        { text: "Talha, Cuma namazında hutbeyi sessizce dinleyip cemaatle saf tuttu.", value: "Cemaat Bilinci ve Saygı" },
+                        { text: "Azra, bayram namazı sonrası büyüklerini ziyaret edip bayramlaştı.", value: "Sıla-i Rahim ve Kardeşlik" },
+                        { text: "Miraç, namazın müminin miracı olduğunu bilerek namazlarını özenle kıldı.", value: "Huşu ve Namaz" },
+                        { text: "Sıla, iftitah tekbirinden selama kadar namazın rükünlerini eksiksiz uyguladı.", value: "İbadette Özen" }
+                    ],
+                    tdb_8_u1: [
+                        { text: "Zeynep, okul bahçesinde bulduğu cüzdanı hiç tereddüt etmeden nöbetçi öğretmene teslim etti.", value: "Emanet ve Kul Hakkı" },
+                        { text: "Kerem, arkadaşlarının arkasından konuşmak (gıybet) yerine güzel yönlerini söyledi.", value: "Gıybetten Kaçınma" },
+                        { text: "Sema, kendi ihtiyacı varken bile elindeki imkânı arkadaşıyla paylaştı (İsar).", value: "İsar ve Cömertlik" },
+                        { text: "Hakan, başarısıyla övünmeyip her zaman alçakgönüllü davrandı.", value: "Tevazu" }
+                    ],
+                    siyer_5_u1: [
+                        { text: "Peygamberimiz gençliğinde bile Mekke'de herkese güven verdiği için 'Muhammedü'l-Emin' diye anıldı.", value: "Güvenilirlik (El-Emin)" },
+                        { text: "Hz. Halime'nin yanında büyürken süt kardeşlerine karşı her zaman vefalı davrandı.", value: "Vefa ve Kardeşlik" },
+                        { text: "Çocukluğunda dedesi Abdülmuttalib ve amcası Ebu Talib'e karşı saygılı ve sorumluluk sahibiydi.", value: "Aileye Saygı" },
+                        { text: "Kâbe hakemliği olayında kabileler arası anlaşmazlığı adaletle çözdü.", value: "Adalet ve Uzlaşma" }
+                    ],
+                    siyer_6_u1: [
+                        { text: "Hz. Hatice (r.anha), ilk vahiy sonrası Peygamberimizi teselli edip yanında durdu.", value: "Vefa ve Destek" },
+                        { text: "Hz. Ebubekir (r.a.), hiçbir tereddüt göstermeden Peygamberimizin sözünü doğruladı.", value: "Sadakat (Sıddık)" },
+                        { text: "Hz. Ali (r.a.), çocuk yaşta olmasına rağmen hakkı ve doğruyu cesaretle kabul etti.", value: "Cesaret ve İman" },
+                        { text: "İlk Müslümanlar, zorluklar karşısında birbirine kenetlenerek sabretti.", value: "Dayanışma ve Sabır" }
+                    ],
+                    siyer_7_u1: [
+                        { text: "Medineli Ensar, Mekke'den göç eden Muhacirlere evlerini ve imkânlarını açtı.", value: "Ensar-Muhacir Kardeşliği" },
+                        { text: "Mescid-i Nebevi'nin inşasında Peygamberimiz bizzat taş taşıyarak ashabıyla çalıştı.", value: "Tevazu ve İş Birliği" },
+                        { text: "Suffe'de yetişen sahabeler gece gündüz ilim öğrenip insanlara öğretti.", value: "İlim ve Eğitim Sevgisi" },
+                        { text: "Hicret yolculuğunda Sevr Mağarası'nda alınan tedbirlerin ardından Allah'a güvenildi.", value: "Tedbir ve Tevekkül" }
+                    ],
+                    siyer_8_u1: [
+                        { text: "Peygamberimiz Veda Hutbesi'nde tüm insanların eşit olduğunu ilan etti.", value: "Eşitlik ve İnsan Hakları" },
+                        { text: "Veda Hutbesi'nde kan davalarını ve haksızlıkları kaldırarak barışı tesis etti.", value: "Barış ve Adalet" },
+                        { text: "Peygamberimiz kadınların ve zayıfların haklarının korunmasını özellikle vasiyet etti.", value: "Merhamet ve Hakkaniyet" },
+                        { text: "Bütün Müslümanların kardeş olduğunu vurgulayarak birlik mesajı verdi.", value: "Kardeşlik ve Birlik" }
+                    ],
+                    kuran_5_u1: [
+                        { text: "Sude, Kur'an'ın ilk suresi olan Fatiha'yı ezberleyip anlamını öğrendi.", value: "Kur'an Sevgisi" },
+                        { text: "Furkan, günde bir cüz okuyarak sınıfça yapılan hatim programına katıldı.", value: "Düzenli Tilavet" },
+                        { text: "Zeynep, Kur'an'daki surelerin ve ayetlerin düzenini merakla araştırdı.", value: "Araştırma ve İlim" },
+                        { text: "Ali, İhlas ve Nas surelerini akşamları okuyarak Allah'a sığındı.", value: "Dua ve Sığınma" }
+                    ],
+                    kuran_6_u1: [
+                        { text: "Enes, Kur'an'ın Ramazan ayında Kadir Gecesi'nde indirilmeye başlandığını öğrendi.", value: "Vahiy Bilinci" },
+                        { text: "Büşra, Hz. Zeyd bin Sabit gibi Kur'an'ı koruma ve öğrenme sorumluluğunu benimsedi.", value: "Emanet ve Sorumluluk" },
+                        { text: "Sami, mukabele geleneğine katılarak Kur'an'ı takip etti.", value: "Birlikte Okuma (Mukabele)" },
+                        { text: "Hafize, 'Sizin en hayırlınız Kur'an'ı öğrenen ve öğretendir' hadisini örnek aldı.", value: "Öğrenme ve Paylaşma" }
+                    ],
+                    kuran_7_u1: [
+                        { text: "Mert, Kur'an'ı tecvid kurallarına (izhar, idgam, ihfa) uyarak tane tane (tertil ile) okudu.", value: "Tertil ve Özen" },
+                        { text: "Aslı, harflerin mahreçlerini doğru çıkarmak için öğretmenini dikkatle dinledi.", value: "Dikkat ve Gayret" },
+                        { text: "Tarık, med kurallarına uyarak ayetlerin anlam bütünlüğünü korudu.", value: "Kurallara Uyma" },
+                        { text: "Nehir, güzel Kur'an okuyan arkadaşlarını takdir edip onları dinledi.", value: "Saygı ve Takdir" }
+                    ],
+                    kuran_8_u1: [
+                        { text: "Kaan, Kur'an'ın ana konularından inanç, ibadet ve ahlakın bir bütün olduğunu kavradı.", value: "Bütüncül Din Anlayışı" },
+                        { text: "Dilara, Kur'an kıssalarından günlük hayatı için öğütler çıkardı.", value: "Tefekkür ve İbret" },
+                        { text: "Okan, Kur'an'ın muamelat ilkeleri gereği alışverişte dürüst olmaya söz verdi.", value: "Dürüstlük ve Adalet" },
+                        { text: "Melike, 'Kur'an akıl sahipleri için bir öğüttür' ayetini düşünerek hareket etti.", value: "Hikmet ve Akıl Bilinci" }
+                    ]
+                };
+
+                const key = `${state.lesson}_${state.grade}_${unit.id}`;
+                const fallbackList = scenarioMap[`${state.lesson}_5_u1`] || scenarioMap.dkab_5_u1;
+                const scenarios = scenarioMap[key] || fallbackList;
+
+                return `
+                    <p class="text-xs sm:text-sm text-slate-700 mb-3"><strong>Yönerge:</strong> <strong>${unit.name}</strong> konusuyla ilgili aşağıdaki olayları okuyarak sergilenen temel değeri tespit edip yazınız.</p>
+                    <div class="space-y-3 my-2">
+                        ${scenarios.map((sc, idx) => `
+                            <div class="p-3.5 rounded-2xl border border-slate-300 bg-slate-50/70 space-y-2">
+                                <p class="text-xs sm:text-sm text-slate-800 fit-box"><strong class="text-emerald-900">${idx + 1}. Olay:</strong> ${sc.text}</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-extrabold text-amber-900 shrink-0">Sergilenen Değer:</span>
+                                    <input type="text" value="${showAns ? sc.value : ''}" placeholder="Üniteye uygun değeri yazınız..." class="w-full px-3 py-1.5 rounded-xl border-2 ${showAns ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold' : 'border-emerald-500 bg-white text-slate-900 font-bold'} text-xs focus:outline-none">
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            return `<p class="text-sm text-slate-600">Oyun içeriği yüklenemedi.</p>`;
+        }
+
+        function buildAnswerKeySheet(selected, lessonTitle, unitData, extraCls) {
+            return `
+                <article class="a4-sheet ${extraCls}">
+                    <div>
+                        <div class="border-b-2 border-amber-600 pb-3 mb-4 flex justify-between items-center">
+                            <div>
+                                <h2 class="text-lg font-extrabold text-slate-900">🔑 CEVAP ANAHTARI</h2>
+                                <p class="text-xs font-bold text-slate-600">${lessonTitle} • ${state.grade}. Sınıf • ${unitData.name}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">Öğretmen Kontrol Sayfası</span>
+                        </div>
+                        <div class="space-y-3 text-xs sm:text-sm text-slate-800">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <strong>Ünite Anahtar Kavramları:</strong> ${unitData.words.join(', ')}
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <strong>Şifreli Mesaj Çözümü:</strong> ${unitData.cipher}
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <strong>Kavram Sudokusu Elemanları:</strong> ${unitData.sudoku.join(' - ')}
+                            </div>
+                            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-950">
+                                <strong>Not:</strong> "Cevap Anahtarı: Açık" durumundayken yukarıdaki tüm oyun sayfalarının üzerinde de çözümler doğrudan görünmektedir.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-200 pt-2.5 mt-6 flex justify-between items-center text-[11px] font-semibold text-slate-500">
+                        <span>💚 Maarifin Kalbinde Oyun: Değerler ve Zekâ Atölyesi • Değerlerle Düşün, Oyunla Öğren</span>
+                        <span>Cevap Anahtarı</span>
+                    </div>
+                </article>
+            `;
+        }
+
+        // MİHENK: AKILLI TAHTA, GRUP YARIŞMASI VE SÜRE SAYACI FONKSİYONLARI
+        let teamScores = { A: 0, B: 0 };
+        let timerSeconds = 180;
+        let timerInterval = null;
+
+        function toggleSmartBoardPanel() {
+            const panel = document.getElementById('mihenkPanel');
+            const btn = document.getElementById('mihenkBtn');
+            const isOpening = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden');
+            document.body.classList.toggle('mihenk-board-mode', isOpening);
+            if (btn) {
+                btn.classList.toggle('ring-2', isOpening);
+                btn.classList.toggle('ring-amber-300', isOpening);
+            }
+            if (isOpening) {
+                if (state.activePageFilter === 'all') {
+                    state.activePageFilter = 0;
+                    renderPreviewPages();
+                }
+                showToast("🏆 Mihenk Tahta & Yarışma modu açıldı! Oyunlar ekrana sığdırıldı.");
+            }
+        }
+
+        function updateTeamScore(team, delta) {
+            teamScores[team] = Math.max(0, teamScores[team] + delta);
+            document.getElementById(`scoreTeam${team}`).textContent = teamScores[team];
+        }
+
+        function formatTimer(sec) {
+            const m = String(Math.floor(sec / 60)).padStart(2, '0');
+            const s = String(sec % 60).padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function toggleMihenkTimer() {
+            const btn = document.getElementById('timerToggleBtn');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.textContent = 'Devam Et';
+                btn.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold';
+            } else {
+                if (timerSeconds === 0) {
+                    timerSeconds = 180;
+                    document.getElementById('mihenkTimerDisplay').textContent = formatTimer(timerSeconds);
+                }
+                btn.textContent = 'Duraklat';
+                btn.className = 'px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold';
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        document.getElementById('mihenkTimerDisplay').textContent = formatTimer(timerSeconds);
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        btn.textContent = 'Süre Doldu!';
+                        showToast("⏰ Süre tamamlandı! Cevapları kontrol edebilirsiniz.");
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetMihenkTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerSeconds = 180;
+            document.getElementById('mihenkTimerDisplay').textContent = formatTimer(timerSeconds);
+            const btn = document.getElementById('timerToggleBtn');
+            btn.textContent = 'Başlat';
+            btn.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold';
+        }
+
+        function toggleFullScreenBoard() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    showToast("Tam ekran modu tarayıcı tarafından engellendi.");
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        window.onload = function () {
+            renderUnits();
+            renderGamesGrid();
+        };
+    </script>
+</body>
+</html>
